@@ -6,7 +6,7 @@ This is my first OS. 我的第一个操作系统
 
 概述：
 --------
-本操作系统仿照[川合秀实](http://lassauge.free.fr/)先生的“haribote”系统编写
+本操作系统仿照[川合秀实](http://hrb.osask.jp/)先生的“haribote”系统编写
 实现基本的图形界面操作，具备多任务处理、汉字显示、文件压缩等功能
 
 许可证:
