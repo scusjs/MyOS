@@ -19,7 +19,19 @@ This is my first OS. 我的第一个操作系统
 
 相关文件说明：
 ----------------
+z_tools：     工具软件（部分摘自《30天自制操作系统》（[川合秀实](http://hrb.osask.jp/)）,作者保留版权）文件夹，Makefile自动调用
+cmd.bat:      调用系统cmd的批处理文件
+Makefile：    自动化编译文件
+dogged.img：  img镜像文件，可通过WinISO等软件制作ISO镜像文件
+*.c:          系统相关c程序文件
+*.nas：       系统相关汇编程序文件
+hankaku.txt： 字库文件
 
+
+系统运行方式：
+-----------------
+双击cmd.bat打开命令行，输入make run运行。
+或者使用相关软件把生成的IMG文件转换为ISO文件直接使用。
 
 更多信息
 ---------
