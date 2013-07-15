@@ -1,5 +1,5 @@
 OBJS_BOOTPACK = bootpack.obj naskfunc.obj hankaku.obj graphic.obj dsctbl.obj \
-		int.obj
+		int.obj fifo.obj
 
 TOOLPATH = ../z_tools/
 INCPATH  = ../z_tools/dogged/
@@ -56,7 +56,7 @@ dogged.img : ipl10.bin dogged.sys Makefile
 
 # 
 
-%.gas : %.c Makefile
+%.gas : %.c  bootpack.h Makefile
 	$(CC1) -o $*.gas $*.c
 
 %.nas : %.gas Makefile

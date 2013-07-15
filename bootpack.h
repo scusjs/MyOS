@@ -75,9 +75,9 @@ void set_gatedesc(struct GATE_DESCRIPTOR *gd, int offset, int selector, int ar);
 #define AR_INTGATE32	0x008e
 
 /* int.c */
-struct KEYBUF {
-	unsigned char data[32];
-	int next_r, next_w, len;//next_r,next_w为队列前后指针，len为队列空间使用大小
+struct FIFO8 {
+	unsigned char *buf;
+	int p, q, size, free, flags;//p,q为队列前后指针，size为队列空间总大小，free为空闲空间大小，flags用于标志溢出
 };
 void init_pic(void);
 #define PIC0_ICW1		0x0020 	//初始化控制数据（initial control word）

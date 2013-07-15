@@ -3,6 +3,7 @@
  */
  #include "bootpack.h"
  #include <stdio.h>
+ 
  void init_pic(void)
  /*PIC的初始化函数*/
  {
@@ -27,35 +28,15 @@
 
 
 #define PORT_KEYDAT		0x0060
-struct KEYBUF keybuf;
+struct FIFO8 keyfifo;
  void inthandler21(int *esp)
  /* 来自PS/2键盘的中断 */
  {
- 	//struct BOOTINFO *binfo = (struct BOOTINFO *) ADR_BOOTINFO;
- 	unsigned char data/*, s[4]*/;
+ 	
+ 	unsigned char data;
  	io_out8(PIC0_OCW2, 0x61);	//通知PIC“IRQ—01已经受理完毕”
  	data = io_in8(PORT_KEYDAT);
-
-	//sprintf(s, "%02X", data);
-	//boxfill8(binfo->vram, binfo->scrnx, COL8_008484, 0, 16, 15, 31);
-	//putfonts8_asc(binfo->vram, binfo->scrnx, 0, 16, COL8_FFFFFF, s);
-
- 	/*if (keybuf.flag == 0)
- 	{
- 		keybuf.data = data;
- 		keybuf.flag = 1;
- 	}*/
- 	if (keybuf.len < 32)
- 	{
- 		keybuf.data[keybuf.next_w] = data;
- 		keybuf.len++;
- 		keybuf.next_w++;
- 		if (keybuf.next_w == 32)
- 		{
- 			keybuf.next_w = 0;
- 		}
-
- 	}
+ 	fifo8_put(&keyfifo,data);
 	return;
  }
  void inthandler2c(int *esp)
