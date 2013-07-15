@@ -18,8 +18,8 @@
 
 void init_gdtidt(void)
 {
-	struct SEGMENT_DESCRIPTOR *gdt = (struct SEGMENT_DESCRIPTOR *) 0x00270000;//任意没有被占用的内存空间
-	struct GATE_DESCRIPTOR    *idt = (struct GATE_DESCRIPTOR    *) 0x0026f800;//任意没有被占用的内存空间
+	struct SEGMENT_DESCRIPTOR *gdt = (struct SEGMENT_DESCRIPTOR *) ADR_GDT;//任意没有被占用的内存空间
+	struct GATE_DESCRIPTOR    *idt = (struct GATE_DESCRIPTOR    *) ADR_IDT;//任意没有被占用的内存空间
 	int i;
 
 	/* GDT的初始化 */
@@ -27,15 +27,20 @@ void init_gdtidt(void)
 		set_segmdesc(gdt + i, 0, 0, 0);//实质上内部存在转换：gdt+i*8。这里全部初始化为0
 	}
 	//0号段保留NULL Description  
-	set_segmdesc(gdt + 1, 0xffffffff, 0x00000000, 0x4092);//cpu能管理的全部4G内存 os数据段
-	set_segmdesc(gdt + 2, 0x0007ffff, 0x00280000, 0x409a);//bootpack.hrb所在512KB内存 os代码段
-	load_gdtr(0xffff, 0x00270000);//给GDTR赋值。将GDT表首地址加载到GDTR  
+	set_segmdesc(gdt + 1, 0xffffffff,   0x00000000, AR_DATA32_RW);//cpu能管理的全部4G内存 os数据段
+	set_segmdesc(gdt + 2, LIMIT_BOTPAK, ADR_BOTPAK, AR_CODE32_ER);//bootpack.hrb所在512KB内存 os代码段
+	load_gdtr(LIMIT_GDT, ADR_GDT);//给GDTR赋值。将GDT表首地址加载到GDTR  
 
 	/* IDT的初始化 */
 	for (i = 0; i < 256; i++) {
 		set_gatedesc(idt + i, 0, 0, 0);
 	}
-	load_idtr(0x7ff, 0x0026f800);
+	load_idtr(LIMIT_IDT, ADR_IDT);
+
+	/* IDT的设定 */
+	set_gatedesc(idt + 0x21, (int) asm_inthandler21, 2 * 8, AR_INTGATE32);
+	set_gatedesc(idt + 0x27, (int) asm_inthandler27, 2 * 8, AR_INTGATE32);
+	set_gatedesc(idt + 0x2c, (int) asm_inthandler2c, 2 * 8, AR_INTGATE32);
 
 	return;
 }
