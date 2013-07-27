@@ -111,3 +111,24 @@ void inthandler2c(int *esp);
 void enable_mouse(struct MOUSE_DEC *mdec);
 int mouse_decode(struct MOUSE_DEC *mdec, unsigned char dat);
 extern struct FIFO8 mousefifo;
+
+/* memory.c */
+#define MEMMAN_FREES		4090	/* 记录空闲空间的数据结构数量，管理空间大约是32KB */
+#define MEMMAN_ADDR			0x003c0000	//0x003c0000后地址空闲
+
+struct FREEINFO {	/* 空闲空间信息 */
+	unsigned int addr, size;
+};
+
+struct MEMMAN {		/* 内存管理 */
+	int frees, maxfrees, lostsize, losts;	//相关见 memman_init注释
+	struct FREEINFO free[MEMMAN_FREES];
+};
+
+unsigned int memtest(unsigned int start, unsigned int end);
+void memman_init(struct MEMMAN *man);
+unsigned int memman_total(struct MEMMAN *man);
+unsigned int memman_alloc(struct MEMMAN *man, unsigned int size);
+int memman_free(struct MEMMAN *man, unsigned int addr, unsigned int size);
+unsigned int memman_alloc_4k(struct MEMMAN *man, unsigned int size);
+int memman_free_4k(struct MEMMAN *man, unsigned int addr, unsigned int size);

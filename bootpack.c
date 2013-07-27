@@ -5,16 +5,15 @@
 #include "bootpack.h"
 #include <stdio.h>
 
-unsigned int memtest(unsigned int start, unsigned int end);
-//unsigned int memtest_sub(unsigned int start, unsigned int end);
-
 void HariMain(void)
 {
 	
 	struct BOOTINFO *binfo = (struct BOOTINFO *) ADR_BOOTINFO;
 	char s[40], mcursor[256], keybuf[32], mousebuf[128];
 	int mx, my, i;
+	unsigned int memtotal;
 	struct MOUSE_DEC mdec;
+	struct MEMMAN *memman = (struct MEMMAN *) MEMMAN_ADDR;
 	
 	
 	init_gdtidt();
@@ -26,6 +25,11 @@ void HariMain(void)
 	io_out8(PIC1_IMR, 0xef); 
 
 	init_keyboard();
+	enable_mouse(&mdec);
+	memtotal = memtest(0x00400000, 0xbfffffff);
+	memman_init(memman);
+	memman_free(memman, 0x00001000, 0x0009e000); /* 0x00001000 - 0x0009efff */
+	memman_free(memman, 0x00400000, memtotal - 0x00400000);
 
 	init_palette();
 	init_screen8(binfo->vram, binfo->scrnx, binfo->scrny);
@@ -33,14 +37,12 @@ void HariMain(void)
 	my = (binfo->scrny - 28 - 16) / 2;
 	init_mouse_cursor8(mcursor, COL8_008484);
 	putblock8_8(binfo->vram, binfo->scrnx, 16, 16, mx, my, mcursor, 16);
-	sprintf(s, "(%d, %d)", mx, my);
+	sprintf(s, "(%3d, %3d)", mx, my);
 	putfonts8_asc(binfo->vram, binfo->scrnx, 0, 0, COL8_FFFFFF, s);
-	i = memtest(0x00400000, 0xbfffffff) / (1024 * 1024);
-	sprintf(s, "memory %dMB", i);
+
+	sprintf(s, "memory %dMB   free : %dKB",
+			memtotal / (1024 * 1024), memman_total(memman) / 1024);
 	putfonts8_asc(binfo->vram, binfo->scrnx, 0, 32, COL8_FFFFFF, s);
-
-
-	enable_mouse(&mdec);
 
 	for (;;) {
 		io_cli();
@@ -101,61 +103,3 @@ void HariMain(void)
 	}
 }
 
-#define EFLAGS_AC_BIT		0x00040000
-#define CR0_CACHE_DISABLE	0x60000000
-
-unsigned int memtest(unsigned int start, unsigned int end)
-{
-	char flg486 = 0;
-	unsigned int eflg, cr0, i;
-
-	/* 确认CPU是386还是486以上 */
-	eflg = io_load_eflags();
-	eflg |= EFLAGS_AC_BIT; /* AC-bit = 1 */
-	io_store_eflags(eflg);
-	eflg = io_load_eflags();
-	if ((eflg & EFLAGS_AC_BIT) != 0) { /* 如果是386，AC的值会自动回到0 */
-		flg486 = 1;
-	}
-	eflg &= ~EFLAGS_AC_BIT; /* AC-bit = 0 */
-	io_store_eflags(eflg);
-
-	if (flg486 != 0) {
-		cr0 = load_cr0();
-		cr0 |= CR0_CACHE_DISABLE; /* 禁止缓存 */
-		store_cr0(cr0);
-	}
-
-	i = memtest_sub(start, end);
-
-	if (flg486 != 0) {
-		cr0 = load_cr0();
-		cr0 &= ~CR0_CACHE_DISABLE; /* 允许缓存 */
-		store_cr0(cr0);
-	}
-
-	return i;
-}
-
-
-//unsigned int memtest_sub(unsigned int start, unsigned int end)
-//{
-//	unsigned int i, *p, old, pat0 = 0xaa55aa55, pat1 = 0x55aa55aa;
-//	for (i = start; i <= end; i += 0x1000) {
-//		p = (unsigned int *) (i + 0xffc);//检查4KB的最后4个字节
-//		old = *p;			/* 先记住修改前的值 */
-//		*p = pat0;			/* 试写 */
-//		*p ^= 0xffffffff;	/* 反转 */
-//		if (*p != pat1) {	/* 检查反转结果 */
-//not_memory:
-//			*p = old;
-//			break;
-//		}
-//		*p ^= 0xffffffff;	/* 再次反转 */
-//		if (*p != pat0) {	/* 检查值是否恢复 */
-//			goto not_memory;
-//		}
-//		*p = old;			/* 回复为修改前的值 */
-//	}
-//	return i;
-//}
