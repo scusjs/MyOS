@@ -27,10 +27,35 @@ dogged.img：  img镜像文件，可通过WinISO等软件制作ISO镜像文件<b
 *.nas：       系统相关汇编程序文件<br />
 hankaku.txt： 字库文件<br />
 
-
+源码编译方式
+----------------
+###Windows平台
+使用源码中的z_tools文件夹中的工具即可。即直接在目录下输入make run
+###Linux平台
+下载替代[工具](http://hrb.osask.jp/z_tools.tar.bz2)，并且修改Makefile:
+		TOOLPATH = z_tools_linux
+		INCPATH = z_tools_linux
+		MAKE = make -r
+		NASK = $(TOOLPATH)nask
+		CC1 = $(TOOLPATH)cc1 -I $(INCPATH) -Os -Wall -quiet
+		GAS2NASK = $(TOOLPATH)gas2nask -a
+		OBJ2BIM = $(TOOLPATH)obj2bim
+		BIN2OBJ = $(TOOLPATH)bin2obj
+		BIM2HRB = $(TOOLPATH)bim2hrb
+		RULEFILE = $(TOOLPATH)dogged/dogged.rul
+		EDIMG = $(TOOLPATH)edimg
+		IMGTOL = $(TOOLPATH)imgtol.com
+		MAKEFONT = $(TOOLPATH)makefont
+		GOLIB = $(TOOLPATH)golib00
+		COPY = cp
+		DEL = rm
+		dogged.sys : asmhead.bin bootpack.hrb Makefile
+		cat asmhead.bin bootpack.hrb > dogged.sys
+		$(EDIMG) imgin:$(TOOLPATH)fdimg0at.tek \
+		
 系统运行方式：
 -----------------
-双击cmd.bat打开命令行，输入make run运行。<br />
+(Windows平台)双击cmd.bat打开命令行，输入make run运行。<br />
 或者使用相关软件把生成的IMG文件转换为ISO文件直接使用。
 
 目前进度：
