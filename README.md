@@ -32,7 +32,7 @@ hankaku.txt： 字库文件<br />
 ### Windows平台
 使用源码中的z_tools文件夹中的工具即可。即直接在目录下输入make run  
 ### Linux平台
-下载替代[工具](http://hrb.osask.jp/z_tools.tar.bz2)，并且修改Makefile:<br />
+使用源码中的z_tools_linux，修改Makefile:<br />
 
     TOOLPATH = z_tools_linux  
     INCPATH = z_tools_linux  
