@@ -29,29 +29,30 @@ hankaku.txt： 字库文件<br />
 
 源码编译方式
 ----------------
-###Windows平台
-使用源码中的z_tools文件夹中的工具即可。即直接在目录下输入make run
-###Linux平台
-下载替代[工具](http://hrb.osask.jp/z_tools.tar.bz2)，并且修改Makefile:
-	TOOLPATH = z_tools_linux
-	INCPATH = z_tools_linux
-	MAKE = make -r
-	NASK = $(TOOLPATH)nask
-	CC1 = $(TOOLPATH)cc1 -I $(INCPATH) -Os -Wall -quiet
-	GAS2NASK = $(TOOLPATH)gas2nask -a
-	OBJ2BIM = $(TOOLPATH)obj2bim
-	BIN2OBJ = $(TOOLPATH)bin2obj
-	BIM2HRB = $(TOOLPATH)bim2hrb
-	RULEFILE = $(TOOLPATH)dogged/dogged.rul
-	EDIMG = $(TOOLPATH)edimg
-	IMGTOL = $(TOOLPATH)imgtol.com
-	MAKEFONT = $(TOOLPATH)makefont
-	GOLIB = $(TOOLPATH)golib00
-	COPY = cp
-	DEL = rm
-	dogged.sys : asmhead.bin bootpack.hrb Makefile
-	cat asmhead.bin bootpack.hrb > dogged.sys
-	$(EDIMG) imgin:$(TOOLPATH)fdimg0at.tek \
+### Windows平台
+使用源码中的z_tools文件夹中的工具即可。即直接在目录下输入make run  
+### Linux平台
+下载替代[工具](http://hrb.osask.jp/z_tools.tar.bz2)，并且修改Makefile:<br />
+
+    TOOLPATH = z_tools_linux  
+    INCPATH = z_tools_linux  
+    MAKE = make -r  
+    NASK = $(TOOLPATH)nask  
+    CC1 = $(TOOLPATH)cc1 -I $(INCPATH) -Os -Wall -quiet  
+    GAS2NASK = $(TOOLPATH)gas2nask -a  
+    OBJ2BIM = $(TOOLPATH)obj2bim  
+    BIN2OBJ = $(TOOLPATH)bin2obj  
+    BIM2HRB = $(TOOLPATH)bim2hrb  
+    RULEFILE = $(TOOLPATH)dogged/dogged.rul  
+    EDIMG = $(TOOLPATH)edimg  
+    IMGTOL = $(TOOLPATH)imgtol.com  
+    MAKEFONT = $(TOOLPATH)makefont  
+    GOLIB = $(TOOLPATH)golib00  
+    COPY = cp  
+    DEL = rm  
+    dogged.sys : asmhead.bin bootpack.hrb Makefile  
+    cat asmhead.bin bootpack.hrb > dogged.sys  
+    $(EDIMG) imgin:$(TOOLPATH)fdimg0at.tek \  
 		
 系统运行方式：
 -----------------
@@ -71,7 +72,7 @@ hankaku.txt： 字库文件<br />
 9.FIFO缓冲区制作[100%]<br />
 10.鼠标移动[90%]<br />
 11.内存管理[90%]<br />
-12.叠加处理[20]<br />
+12.叠加处理[20%]<br />
 
 更多信息
 ---------
