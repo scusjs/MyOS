@@ -14,7 +14,7 @@ struct SHTCTL *shtctl_init(struct MEMMAN *memman, unsigned char *vram, int xsize
 	int i;
 	ctl = (struct SHTCTL *) memman_alloc_4k(memman, sizeof (struct SHTCTL));	//分配内存
 	if (ctl == 0) {
-		goto err;
+		return ctl;
 	}
 	ctl->vram = vram;
 	ctl->xsize = xsize;
@@ -22,8 +22,8 @@ struct SHTCTL *shtctl_init(struct MEMMAN *memman, unsigned char *vram, int xsize
 	ctl->top = -1; /* 一个SHEEL都没有 */
 	for (i = 0; i < MAX_SHEETS; i++) {
 		ctl->sheets0[i].flags = 0; /* 标记为未使用 */
+		ctl->sheets0[i].ctl = ctl; /* 记录所属 */
 	}
-err:
 	return ctl;
 }
 
@@ -102,10 +102,11 @@ void sheet_refreshsub(struct SHTCTL *ctl, int vx0, int vy0, int vx1, int vy1)
 	return;
 }
 
-void sheet_updown(struct SHTCTL *ctl, struct SHEET *sht, int height)
+void sheet_updown(struct SHEET *sht, int height)
 /* 设定图层高度 */
 {
 	int h, old = sht->height; /* 储存设置前的高度信息 */
+	struct SHTCTL *ctl = sht->ctl;
 
 	/* 修正高度 */
 	if (height > ctl->top + 1) {
@@ -158,18 +159,20 @@ void sheet_updown(struct SHTCTL *ctl, struct SHEET *sht, int height)
 	return;
 }
 
-void sheet_refresh(struct SHTCTL *ctl, struct SHEET *sht, int bx0, int by0, int bx1, int by1)
+void sheet_refresh( struct SHEET *sht, int bx0, int by0, int bx1, int by1)
 /* 刷新图层函数 */
 {
+	struct SHTCTL *ctl = sht->ctl;
 	if (sht->height >= 0) { /* 如果图层显示才刷新 */
 		sheet_refreshsub(ctl, sht->vx0 + bx0, sht->vy0 + by0, sht->vx0 + bx1, sht->vy0 + by1);
 	}
 	return;
 }
 
-void sheet_slide(struct SHTCTL *ctl, struct SHEET *sht, int vx0, int vy0)
+void sheet_slide( struct SHEET *sht, int vx0, int vy0)
 /* 移动图层 */
 {
+	struct SHTCTL *ctl = sht->ctl;
 	int old_vx0 = sht->vx0, old_vy0 = sht->vy0;	//记住原来的位置
 	sht->vx0 = vx0;	//获得新的位置
 	sht->vy0 = vy0;
@@ -180,11 +183,12 @@ void sheet_slide(struct SHTCTL *ctl, struct SHEET *sht, int vx0, int vy0)
 	return;
 }
 
-void sheet_free(struct SHTCTL *ctl, struct SHEET *sht)
+void sheet_free( struct SHEET *sht)
 /* 删除图层 */
 {
+	struct SHTCTL *ctl = sht->ctl;
 	if (sht->height >= 0) {
-		sheet_updown(ctl, sht, -1); /* 先把图层隐藏 */
+		sheet_updown(sht, -1); /* 先把图层隐藏 */
 	}
 	sht->flags = 0; /* 设定图层未使用 */
 	return;

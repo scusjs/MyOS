@@ -72,13 +72,13 @@ hankaku.txt： 字库文件<br />
 9.FIFO缓冲区制作[100%]<br />
 10.鼠标显示[100%]<br />
 11.内存管理[90%]<br />
-12.叠加处理[50%]<br />
+12.叠加处理[80%]<br />
 
 更多信息
 ---------
 欢迎访问我的博客获得更多相关的信息:<br />
 1.[scusjs的专栏](http://blog.csdn.net/scusjs)<br />  
-2.[成长的路，点滴记录](http://falcon_s.byethost15.com/)<br />
+~~2.[成长的路，点滴记录](http://falcon_s.byethost15.com/)~~<br />
 
 
 
