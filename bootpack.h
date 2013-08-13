@@ -1,11 +1,11 @@
 /* bootpack.h */
 /* asmhead.nas */
 struct BOOTINFO { /* 0x0ff0-0x0fff */
-	char cyls; /* Æô¶¯Çø¶Á´ÅÅÌµ½ºÎ´¦ÎªÖ¹ */
-	char leds; /* Æô¶¯Ê±¼üÅÌLEDµÄ×´Ì¬ */
-	char vmode; /* ÏÔ¿¨Ä£Ê½ */
+	char cyls; /* å¯åŠ¨åŒºè¯»ç£ç›˜åˆ°ä½•å¤„ä¸ºæ­¢ */
+	char leds; /* å¯åŠ¨æ—¶é”®ç›˜LEDçš„çŠ¶æ€ */
+	char vmode; /* æ˜¾å¡æ¨¡å¼ */
 	char reserve;
-	short scrnx, scrny; /* »­Ãæ·Ö±æÂÊ */
+	short scrnx, scrny; /* ç”»é¢åˆ†è¾¨ç‡ */
 	char *vram;
 };
 #define ADR_BOOTINFO	0x00000ff0
@@ -77,18 +77,18 @@ void set_gatedesc(struct GATE_DESCRIPTOR *gd, int offset, int selector, int ar);
 /* int.c */
 struct FIFO8 {
 	unsigned char *buf;
-	int p, q, size, free, flags;//p,qÎª¶ÓÁĞÇ°ºóÖ¸Õë£¬sizeÎª¶ÓÁĞ¿Õ¼ä×Ü´óĞ¡£¬freeÎª¿ÕÏĞ¿Õ¼ä´óĞ¡£¬flagsÓÃÓÚ±êÖ¾Òç³ö
+	int p, q, size, free, flags;//p,qä¸ºé˜Ÿåˆ—å‰åæŒ‡é’ˆï¼Œsizeä¸ºé˜Ÿåˆ—ç©ºé—´æ€»å¤§å°ï¼Œfreeä¸ºç©ºé—²ç©ºé—´å¤§å°ï¼Œflagsç”¨äºæ ‡å¿—æº¢å‡º
 };
 void init_pic(void);
-#define PIC0_ICW1		0x0020 	//³õÊ¼»¯¿ØÖÆÊı¾İ£¨initial control word£©
+#define PIC0_ICW1		0x0020 	//åˆå§‹åŒ–æ§åˆ¶æ•°æ®ï¼ˆinitial control wordï¼‰
 #define PIC0_OCW2		0x0020
-#define PIC0_IMR		0x0021	//ÖĞ¶ÏÆÁ±Î¼Ä´æÆ÷£¨interrupt mask register£©
+#define PIC0_IMR		0x0021	//ä¸­æ–­å±è”½å¯„å­˜å™¨ï¼ˆinterrupt mask registerï¼‰
 #define PIC0_ICW2		0x0021
 #define PIC0_ICW3		0x0021
 #define PIC0_ICW4		0x0021
 #define PIC1_ICW1		0x00a0
 #define PIC1_OCW2		0x00a0
-#define PIC1_IMR		0x00a1	//ÖĞ¶ÏÆÁ±Î¼Ä´æÆ÷£¨interrupt mask register£©
+#define PIC1_IMR		0x00a1	//ä¸­æ–­å±è”½å¯„å­˜å™¨ï¼ˆinterrupt mask registerï¼‰
 #define PIC1_ICW2		0x00a1
 #define PIC1_ICW3		0x00a1
 #define PIC1_ICW4		0x00a1
@@ -113,15 +113,15 @@ int mouse_decode(struct MOUSE_DEC *mdec, unsigned char dat);
 extern struct FIFO8 mousefifo;
 
 /* memory.c */
-#define MEMMAN_FREES		4090	/* ¼ÇÂ¼¿ÕÏĞ¿Õ¼äµÄÊı¾İ½á¹¹ÊıÁ¿£¬¹ÜÀí¿Õ¼ä´óÔ¼ÊÇ32KB */
-#define MEMMAN_ADDR			0x003c0000	//0x003c0000ºóµØÖ·¿ÕÏĞ
+#define MEMMAN_FREES		4090	/* è®°å½•ç©ºé—²ç©ºé—´çš„æ•°æ®ç»“æ„æ•°é‡ï¼Œç®¡ç†ç©ºé—´å¤§çº¦æ˜¯32KB */
+#define MEMMAN_ADDR			0x003c0000	//0x003c0000ååœ°å€ç©ºé—²
 
-struct FREEINFO {	/* ¿ÕÏĞ¿Õ¼äĞÅÏ¢ */
+struct FREEINFO {	/* ç©ºé—²ç©ºé—´ä¿¡æ¯ */
 	unsigned int addr, size;
 };
 
-struct MEMMAN {		/* ÄÚ´æ¹ÜÀí */
-	int frees, maxfrees, lostsize, losts;	//Ïà¹Ø¼û memman_init×¢ÊÍ
+struct MEMMAN {		/* å†…å­˜ç®¡ç† */
+	int frees, maxfrees, lostsize, losts;	//ç›¸å…³è§ memman_initæ³¨é‡Š
 	struct FREEINFO free[MEMMAN_FREES];
 };
 
@@ -136,31 +136,33 @@ int memman_free_4k(struct MEMMAN *man, unsigned int addr, unsigned int size);
 
 /* sheet.c */
 #define MAX_SHEETS		256
-//SHEET½á¹¹Ìå´¢´æÍ¼²ãÏà¹ØĞÅÏ¢
+//SHEETç»“æ„ä½“å‚¨å­˜å›¾å±‚ç›¸å…³ä¿¡æ¯
 struct SHEET {
-	unsigned char *buf;	//¼ÇÂ¼Í¼²ãÉÏËùÃè»­ÄÚÈİµÄµØÖ·
+	unsigned char *buf;	//è®°å½•å›¾å±‚ä¸Šæ‰€æç”»å†…å®¹çš„åœ°å€
 	int bxsize, bysize, vx0, vy0, col_inv, height, flags;
 	struct SHTCTL *ctl;
 	/*
-	 * bxsize*bysizeÍ¼²ã´óĞ¡
-	 * vx0,vy0Í¼²ãÎ»ÖÃ×ø±ê
-	 * col_invÍ¸Ã÷É«É«ºÅ
-	 * heightÍ¼²ã¸ß¶È
-	 * flagsÍ¼²ãµÄ±ê¼ÇĞÅÏ¢
+	 * bxsize*bysizeå›¾å±‚å¤§å°
+	 * vx0,vy0å›¾å±‚ä½ç½®åæ ‡
+	 * col_invé€æ˜è‰²è‰²å·
+	 * heightå›¾å±‚é«˜åº¦
+	 * flagså›¾å±‚çš„æ ‡è®°ä¿¡æ¯
 	 */
 };
-//SHTCTL½á¹¹Ìå¹ÜÀíÍ¼²ã
+//SHTCTLç»“æ„ä½“ç®¡ç†å›¾å±‚
 struct SHTCTL {
-	unsigned char *vram;	//VRAMµØÖ·
-	int xsize, ysize, top;	//xsize,ysize»­Ãæ´óĞ¡£¬top×îÉÏÃæÍ¼²ãµÄ¸ß¶È
-	struct SHEET *sheets[MAX_SHEETS];	//°´¸ß¶ÈÅÅĞòµÄÍ¼²ãĞÅÏ¢
-	struct SHEET sheets0[MAX_SHEETS];	//Í¼²ãĞÅÏ¢
+	unsigned char *vram;	//VRAMåœ°å€
+	unsigned char *map;
+	int xsize, ysize, top;	//xsize,ysizeç”»é¢å¤§å°ï¼Œtopæœ€ä¸Šé¢å›¾å±‚çš„é«˜åº¦
+	struct SHEET *sheets[MAX_SHEETS];	//æŒ‰é«˜åº¦æ’åºçš„å›¾å±‚ä¿¡æ¯
+	struct SHEET sheets0[MAX_SHEETS];	//å›¾å±‚ä¿¡æ¯
 };
 struct SHTCTL *shtctl_init(struct MEMMAN *memman, unsigned char *vram, int xsize, int ysize);
 struct SHEET *sheet_alloc(struct SHTCTL *ctl);
 void sheet_setbuf(struct SHEET *sht, unsigned char *buf, int xsize, int ysize, int col_inv);
+void sheet_refreshmap(struct SHTCTL *ctl, int vx0, int vy0, int vx1, int vy1, int h0);
 void sheet_updown( struct SHEET *sht, int height);
 void sheet_refresh( struct SHEET *sht, int bx0, int by0, int bx1, int by1);
 void sheet_slide( struct SHEET *sht, int vx0, int vy0);
 void sheet_free( struct SHEET *sht);
-void sheet_refreshsub(struct SHTCTL *ctl, int vx0, int vy0, int vx1, int vy1);
+void sheet_refreshsub(struct SHTCTL *ctl, int vx0, int vy0, int vx1, int vy1, int h0, int h1);
