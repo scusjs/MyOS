@@ -26,11 +26,12 @@ void HariMain(void)
 	
 	init_gdtidt();
 	init_pic();
-	io_sti(); 
+	io_sti(); //结束IDT/PIC初始化，解除CPU中断禁用
 	fifo8_init(&keyfifo, 32 , keybuf);
 	fifo8_init(&mousefifo, 128 , mousebuf);
-	io_out8(PIC0_IMR, 0xf9); /* PIC1以外全部禁止(11111001) */
-	io_out8(PIC1_IMR, 0xef); 
+	init_pit();
+	io_out8(PIC0_IMR, 0xf8); /* PIT和PIC1以外全部禁止(11111000) */
+	io_out8(PIC1_IMR, 0xef); //鼠标设置为许可
 
 	init_keyboard();
 	enable_mouse(&mdec);
