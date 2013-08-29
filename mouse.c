@@ -7,8 +7,15 @@
 #define KEYCMD_SENDTO_MOUSE		0xd4 	//发送数据给鼠标
 #define MOUSECMD_ENABLE			0xf4 	//鼠标答复信息
 
-void enable_mouse(struct MOUSE_DEC *mdec)
+struct FIFO32 *mousefifo;
+int mousedata0;
+
+
+void enable_mouse(struct FIFO32 *fifo, int data0, struct MOUSE_DEC *mdec)
 {
+	/* 将FIFO缓冲区的内容写到全局变量中 */
+	mousefifo = fifo;
+	mousedata0 = data0;
 	/* 激活鼠标 */
 	wait_KBC_sendready();
 	io_out8(PORT_KEYCMD, KEYCMD_SENDTO_MOUSE);
@@ -17,6 +24,17 @@ void enable_mouse(struct MOUSE_DEC *mdec)
 
 	mdec->phase = 0; /* 等待0xfa的阶段 */
 	return; 
+}
+
+void inthandler2c(int *esp)
+/* PS/2鼠标的中断 */
+{
+	int data;
+	io_out8(PIC1_OCW2, 0x64);	/* 通知PIC1，IRQ-12的受理已完成 */
+	io_out8(PIC0_OCW2, 0x62);	/* 通知PIC0，IRQ-02的受理已完成 */
+	data = io_in8(PORT_KEYDAT);
+	fifo32_put(mousefifo, data);
+	return;
 }
 
 int mouse_decode(struct MOUSE_DEC *mdec, unsigned char dat)
@@ -65,15 +83,3 @@ int mouse_decode(struct MOUSE_DEC *mdec, unsigned char dat)
 	return -1; /* 异常返回 */
 }
 
- struct FIFO8 mousefifo;
-
- void inthandler2c(int *esp)
-/* PS/2鼠标的中断 */
-{
-	unsigned char data;
-	io_out8(PIC1_OCW2, 0x64);	/* 通知PIC1，IRQ-12的受理已完成 */
-	io_out8(PIC0_OCW2, 0x62);	/* 通知PIC0，IRQ-02的受理已完成 */
-	data = io_in8(PORT_KEYDAT);
-	fifo8_put(&mousefifo, data);
-	return;
-}
