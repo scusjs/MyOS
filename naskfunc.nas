@@ -1,14 +1,10 @@
 ; naskfunc
 ; TAB=4
 
-[FORMAT "WCOFF"]				; 制作目标文件的模式	
-[INSTRSET "i486p"]				; 表示适用于486，即使用32位寄存器
-[BITS 32]						; 制作32位模式用的机器语言
-
-
-; 制作目标文件的信息
-
-[FILE "naskfunc.nas"]			; 源文件名信息
+[FORMAT "WCOFF"]				; 僆僽僕僃僋僩僼傽僀儖傪嶌傞儌乕僪	
+[INSTRSET "i486p"]				; 486偺柦椷傑偱巊偄偨偄偲偄偆婰弎
+[BITS 32]						; 32價僢僩儌乕僪梡偺婡夿岅傪嶌傜偣傞
+[FILE "naskfunc.nas"]			; 僜乕僗僼傽僀儖柤忣曬
 
 		GLOBAL	_io_hlt, _io_cli, _io_sti, _io_stihlt
 		GLOBAL	_io_in8,  _io_in16,  _io_in32
@@ -16,10 +12,13 @@
 		GLOBAL	_io_load_eflags, _io_store_eflags
 		GLOBAL	_load_gdtr, _load_idtr
 		GLOBAL	_load_cr0, _store_cr0
-		GLOBAL	_load_tr,_taskswitch4,_taskswitch3
-		GLOBAL	_asm_inthandler20, _asm_inthandler21, _asm_inthandler27, _asm_inthandler2c
+		GLOBAL	_load_tr
+		GLOBAL	_asm_inthandler20, _asm_inthandler21
+		GLOBAL	_asm_inthandler27, _asm_inthandler2c
 		GLOBAL	_memtest_sub
-		EXTERN	_inthandler20, _inthandler21, _inthandler27, _inthandler2c
+		GLOBAL	_farjmp
+		EXTERN	_inthandler20, _inthandler21
+		EXTERN	_inthandler27, _inthandler2c
 
 [SECTION .text]
 
@@ -28,11 +27,11 @@ _io_hlt:	; void io_hlt(void);
 		RET
 
 _io_cli:	; void io_cli(void);
-		CLI 						; 置IF=0，CPU禁止响应外部中断 
+		CLI
 		RET
 
 _io_sti:	; void io_sti(void);
-		STI 						; 置IF=1，使CPU允许向应外部中断 
+		STI
 		RET
 
 _io_stihlt:	; void io_stihlt(void);
@@ -76,25 +75,26 @@ _io_out32:	; void io_out32(int port, int data);
 		RET
 
 _io_load_eflags:	; int io_load_eflags(void);
-		PUSHFD		; PUSH EFLAGS 
+		PUSHFD		; PUSH EFLAGS 偲偄偆堄枴
 		POP		EAX
 		RET
 
 _io_store_eflags:	; void io_store_eflags(int eflags);
 		MOV		EAX,[ESP+4]
 		PUSH	EAX
-		POPFD		; POP EFLAGS 
+		POPFD		; POP EFLAGS 偲偄偆堄枴
 		RET
+
 _load_gdtr:		; void load_gdtr(int limit, int addr);
 		MOV		AX,[ESP+4]		; limit
 		MOV		[ESP+6],AX
-		LGDT	[ESP+6]			; 将源操作数中的值加载到全局描述符表格寄存器 (GDTR) 
+		LGDT	[ESP+6]
 		RET
 
 _load_idtr:		; void load_idtr(int limit, int addr);
 		MOV		AX,[ESP+4]		; limit
 		MOV		[ESP+6],AX
-		LIDT	[ESP+6]			; 将源操作数中的值加载到中断描述符表格寄存器 (IDTR) 
+		LIDT	[ESP+6]
 		RET
 
 _load_cr0:		; int load_cr0(void);
@@ -106,8 +106,8 @@ _store_cr0:		; void store_cr0(int cr0);
 		MOV		CR0,EAX
 		RET
 
-_load_tr:		;void load_tr(int tr);
-		LTR 	[ESP+4]		;tr
+_load_tr:		; void load_tr(int tr);
+		LTR		[ESP+4]			; tr
 		RET
 
 _asm_inthandler20:
@@ -125,7 +125,6 @@ _asm_inthandler20:
 		POP		DS
 		POP		ES
 		IRETD
-
 
 _asm_inthandler21:
 		PUSH	ES
@@ -176,7 +175,7 @@ _asm_inthandler2c:
 		IRETD
 
 _memtest_sub:	; unsigned int memtest_sub(unsigned int start, unsigned int end)
-		PUSH	EDI						; （由于还要使用EBX, ESI, EDI）
+		PUSH	EDI						; 乮EBX, ESI, EDI 傕巊偄偨偄偺偱乯
 		PUSH	ESI
 		PUSH	EBX
 		MOV		ESI,0xaa55aa55			; pat0 = 0xaa55aa55;
@@ -208,10 +207,6 @@ mts_fin:
 		POP		EDI
 		RET
 
-_taskswitch4:	; void taskswitch4(void);
-		JMP		4*8:0
-		RET
-
-_taskswitch3:	; void taskswitch3(void);
-		JMP		3*8:0
+_farjmp:		; void farjmp(int eip, int cs);
+		JMP		FAR	[ESP+4]				; eip, cs
 		RET

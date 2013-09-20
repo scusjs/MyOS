@@ -1,28 +1,26 @@
-/*
- *fifo.cæ–‡ä»¶
- *FOFOç¼“å†²åŒºç›¸å…³å‡½æ•°
- */
+/* FIFOƒ‰ƒCƒuƒ‰ƒŠ */
 
 #include "bootpack.h"
 
 #define FLAGS_OVERRUN		0x0001
 
 void fifo32_init(struct FIFO32 *fifo, int size, int *buf)
-/* fifoç¼“å†²åŒºçš„åˆå§‹åŒ– */
+/* FIFOƒoƒbƒtƒ@‚Ì‰Šú‰» */
 {
 	fifo->size = size;
 	fifo->buf = buf;
-	fifo->free = size; /* åˆå§‹åŒ–æ—¶ç©ºé—²å¤§å°ç­‰äºŽæ€»å¤§å° */
+	fifo->free = size; /* ‹ó‚« */
 	fifo->flags = 0;
-	fifo->p = 0; /* ä¸‹ä¸€ä¸ªæ•°æ®å†™å…¥ä½ç½® */
-	fifo->q = 0; /* ä¸‹ä¸€ä¸ªæ•°æ®è¯»å–ä½ç½® */
+	fifo->p = 0; /* ‘‚«ž‚ÝˆÊ’u */
+	fifo->q = 0; /* “Ç‚Ýž‚ÝˆÊ’u */
+	return;
 }
 
 int fifo32_put(struct FIFO32 *fifo, int data)
-/* å‘FIFOä¼ é€æ•°æ®å¹¶ä¿å­˜ */
+/* FIFO‚Öƒf[ƒ^‚ð‘—‚èž‚ñ‚Å’~‚¦‚é */
 {
 	if (fifo->free == 0) {
-		/* æ²¡æœ‰ç©ºä½™ç©ºé—´ï¼Œå‘ç”Ÿæº¢å‡º */
+		/* ‹ó‚«‚ª‚È‚­‚Ä‚ ‚Ó‚ê‚½ */
 		fifo->flags |= FLAGS_OVERRUN;
 		return -1;
 	}
@@ -36,11 +34,11 @@ int fifo32_put(struct FIFO32 *fifo, int data)
 }
 
 int fifo32_get(struct FIFO32 *fifo)
-/* ä»ŽFIFOå–å¾—ä¸€ä¸ªæ•°æ® */
+/* FIFO‚©‚çƒf[ƒ^‚ðˆê‚Â‚Æ‚Á‚Ä‚­‚é */
 {
 	int data;
 	if (fifo->free == fifo->size) {
-		/* ç¼“å†²åŒºä¸ºç©ºï¼Œè¿”å›ž-1 */
+		/* ƒoƒbƒtƒ@‚ª‹ó‚Á‚Û‚Ì‚Æ‚«‚ÍA‚Æ‚è‚ ‚¦‚¸-1‚ª•Ô‚³‚ê‚é */
 		return -1;
 	}
 	data = fifo->buf[fifo->q];
@@ -53,7 +51,7 @@ int fifo32_get(struct FIFO32 *fifo)
 }
 
 int fifo32_status(struct FIFO32 *fifo)
-/* èŽ·å–ç¼“å†²åŒºä½¿ç”¨é‡ */
+/* ‚Ç‚Ì‚­‚ç‚¢ƒf[ƒ^‚ª—­‚Ü‚Á‚Ä‚¢‚é‚©‚ð•ñ‚·‚é */
 {
 	return fifo->size - fifo->free;
 }

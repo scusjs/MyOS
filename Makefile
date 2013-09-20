@@ -1,8 +1,8 @@
 OBJS_BOOTPACK = bootpack.obj naskfunc.obj hankaku.obj graphic.obj dsctbl.obj \
-		int.obj fifo.obj mouse.obj keyboard.obj memory.obj sheet.obj timer.obj
+		int.obj fifo.obj keyboard.obj mouse.obj memory.obj sheet.obj timer.obj
 
 TOOLPATH = ../z_tools/
-INCPATH  = ../z_tools/dogged/
+INCPATH  = ../z_tools/haribote/
 
 MAKE     = $(TOOLPATH)make.exe -r
 NASK     = $(TOOLPATH)nask.exe
@@ -12,18 +12,18 @@ OBJ2BIM  = $(TOOLPATH)obj2bim.exe
 MAKEFONT = $(TOOLPATH)makefont.exe
 BIN2OBJ  = $(TOOLPATH)bin2obj.exe
 BIM2HRB  = $(TOOLPATH)bim2hrb.exe
-RULEFILE = $(TOOLPATH)dogged/dogged.rul
+RULEFILE = $(TOOLPATH)haribote/haribote.rul
 EDIMG    = $(TOOLPATH)edimg.exe
 IMGTOL   = $(TOOLPATH)imgtol.com
 COPY     = copy
 DEL      = del
 
-# 
+# デフォルト動作
 
 default :
 	$(MAKE) img
 
-# 
+# ファイル生成規則
 
 ipl10.bin : ipl10.nas Makefile
 	$(NASK) ipl10.nas ipl10.bin ipl10.lst
@@ -45,18 +45,18 @@ bootpack.bim : $(OBJS_BOOTPACK) Makefile
 bootpack.hrb : bootpack.bim Makefile
 	$(BIM2HRB) bootpack.bim bootpack.hrb 0
 
-dogged.sys : asmhead.bin bootpack.hrb Makefile
-	copy /B asmhead.bin+bootpack.hrb dogged.sys
+haribote.sys : asmhead.bin bootpack.hrb Makefile
+	copy /B asmhead.bin+bootpack.hrb haribote.sys
 
-dogged.img : ipl10.bin dogged.sys Makefile
+haribote.img : ipl10.bin haribote.sys Makefile
 	$(EDIMG)   imgin:../z_tools/fdimg0at.tek \
 		wbinimg src:ipl10.bin len:512 from:0 to:0 \
-		copy from:dogged.sys to:@: \
-		imgout:dogged.img
+		copy from:haribote.sys to:@: \
+		imgout:haribote.img
 
-# 
+# 一般規則
 
-%.gas : %.c  bootpack.h Makefile
+%.gas : %.c bootpack.h Makefile
 	$(CC1) -o $*.gas $*.c
 
 %.nas : %.gas Makefile
@@ -65,19 +65,19 @@ dogged.img : ipl10.bin dogged.sys Makefile
 %.obj : %.nas Makefile
 	$(NASK) $*.nas $*.obj $*.lst
 
-# 
+# コマンド
 
 img :
-	$(MAKE) dogged.img
+	$(MAKE) haribote.img
 
 run :
 	$(MAKE) img
-	$(COPY) dogged.img ..\z_tools\qemu\fdimage0.bin
+	$(COPY) haribote.img ..\z_tools\qemu\fdimage0.bin
 	$(MAKE) -C ../z_tools/qemu
 
 install :
 	$(MAKE) img
-	$(IMGTOL) w a: dogged.img
+	$(IMGTOL) w a: haribote.img
 
 clean :
 	-$(DEL) *.bin
@@ -86,8 +86,8 @@ clean :
 	-$(DEL) bootpack.map
 	-$(DEL) bootpack.bim
 	-$(DEL) bootpack.hrb
-	-$(DEL) dogged.sys
+	-$(DEL) haribote.sys
 
 src_only :
 	$(MAKE) clean
-	-$(DEL) dogged.img
+	-$(DEL) haribote.img
