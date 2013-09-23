@@ -1,10 +1,11 @@
+/* bootpack.h */
 /* asmhead.nas */
 struct BOOTINFO { /* 0x0ff0-0x0fff */
-	char cyls; /* �u�[�g�Z�N�^�͂ǂ��܂Ńf�B�X�N��ǂ񂾂̂� */
-	char leds; /* �u�[�g���̃L�[�{�[�h��LED�̏�� */
-	char vmode; /* �r�f�I���[�h  ���r�b�g�J���[�� */
+	char cyls; /* 启动区读磁盘到何处为止 */
+	char leds; /* 启动时键盘LED的状态 */
+	char vmode; /* 显卡模式 */
 	char reserve;
-	short scrnx, scrny; /* ��ʉ𑜓x */
+	short scrnx, scrny; /* 画面分辨率 */
 	char *vram;
 };
 #define ADR_BOOTINFO	0x00000ff0
@@ -13,32 +14,16 @@ struct BOOTINFO { /* 0x0ff0-0x0fff */
 void io_hlt(void);
 void io_cli(void);
 void io_sti(void);
-void io_stihlt(void);
-int io_in8(int port);
 void io_out8(int port, int data);
 int io_load_eflags(void);
 void io_store_eflags(int eflags);
 void load_gdtr(int limit, int addr);
 void load_idtr(int limit, int addr);
-int load_cr0(void);
-void store_cr0(int cr0);
-void load_tr(int tr);
 void asm_inthandler20(void);
 void asm_inthandler21(void);
 void asm_inthandler27(void);
 void asm_inthandler2c(void);
-unsigned int memtest_sub(unsigned int start, unsigned int end);
 void farjmp(int eip, int cs);
-
-/* fifo.c */
-struct FIFO32 {
-	int *buf;
-	int p, q, size, free, flags;
-};
-void fifo32_init(struct FIFO32 *fifo, int size, int *buf);
-int fifo32_put(struct FIFO32 *fifo, int data);
-int fifo32_get(struct FIFO32 *fifo);
-int fifo32_status(struct FIFO32 *fifo);
 
 /* graphic.c */
 void init_palette(void);
@@ -67,6 +52,17 @@ void putblock8_8(char *vram, int vxsize, int pxsize,
 #define COL8_008484		14
 #define COL8_848484		15
 
+/* fifo.c */
+struct FIFO32
+{
+	int *buf;
+	int p, q, size, free, flags;//p,q为队列前后指针，size为队列空间总大小，free为空闲空间大小，flags用于标志溢出
+};
+void fifo32_init(struct FIFO32 *fifo, int size, int *buf);
+int fifo32_put(struct FIFO32 *fifo, int data);
+int fifo32_get(struct FIFO32 *fifo);
+int fifo32_status(struct FIFO32 *fifo);
+
 /* dsctbl.c */
 struct SEGMENT_DESCRIPTOR {
 	short limit_low, base_low;
@@ -89,24 +85,27 @@ void set_gatedesc(struct GATE_DESCRIPTOR *gd, int offset, int selector, int ar);
 #define LIMIT_BOTPAK	0x0007ffff
 #define AR_DATA32_RW	0x4092
 #define AR_CODE32_ER	0x409a
+#define AR_INTGATE32	0x008e
 #define AR_TSS32		0x0089
 #define AR_INTGATE32	0x008e
 
 /* int.c */
+
 void init_pic(void);
-void inthandler27(int *esp);
-#define PIC0_ICW1		0x0020
+void inthandler27(int *esp);;
+#define PIC0_ICW1		0x0020 	//初始化控制数据（initial control word）
 #define PIC0_OCW2		0x0020
-#define PIC0_IMR		0x0021
+#define PIC0_IMR		0x0021	//中断屏蔽寄存器（interrupt mask register）
 #define PIC0_ICW2		0x0021
 #define PIC0_ICW3		0x0021
 #define PIC0_ICW4		0x0021
 #define PIC1_ICW1		0x00a0
 #define PIC1_OCW2		0x00a0
-#define PIC1_IMR		0x00a1
+#define PIC1_IMR		0x00a1	//中断屏蔽寄存器（interrupt mask register）
 #define PIC1_ICW2		0x00a1
 #define PIC1_ICW3		0x00a1
 #define PIC1_ICW4		0x00a1
+
 
 /* keyboard.c */
 void inthandler21(int *esp);
@@ -125,15 +124,18 @@ void enable_mouse(struct FIFO32 *fifo, int data0, struct MOUSE_DEC *mdec);
 int mouse_decode(struct MOUSE_DEC *mdec, unsigned char dat);
 
 /* memory.c */
-#define MEMMAN_FREES		4090	/* ����Ŗ�32KB */
-#define MEMMAN_ADDR			0x003c0000
-struct FREEINFO {	/* ������� */
+#define MEMMAN_FREES		4090	/* 记录空闲空间的数据结构数量，管理空间大约是32KB */
+#define MEMMAN_ADDR			0x003c0000	//0x003c0000后地址空闲
+
+struct FREEINFO {	/* 空闲空间信息 */
 	unsigned int addr, size;
 };
-struct MEMMAN {		/* �������Ǘ� */
-	int frees, maxfrees, lostsize, losts;
+
+struct MEMMAN {		/* 内存管理 */
+	int frees, maxfrees, lostsize, losts;	//相关见 memman_init注释
 	struct FREEINFO free[MEMMAN_FREES];
 };
+
 unsigned int memtest(unsigned int start, unsigned int end);
 void memman_init(struct MEMMAN *man);
 unsigned int memman_total(struct MEMMAN *man);
@@ -142,37 +144,52 @@ int memman_free(struct MEMMAN *man, unsigned int addr, unsigned int size);
 unsigned int memman_alloc_4k(struct MEMMAN *man, unsigned int size);
 int memman_free_4k(struct MEMMAN *man, unsigned int addr, unsigned int size);
 
+
 /* sheet.c */
 #define MAX_SHEETS		256
+//SHEET结构体储存图层相关信息
 struct SHEET {
-	unsigned char *buf;
+	unsigned char *buf;	//记录图层上所描画内容的地址
 	int bxsize, bysize, vx0, vy0, col_inv, height, flags;
 	struct SHTCTL *ctl;
+	/*
+	 * bxsize*bysize图层大小
+	 * vx0,vy0图层位置坐标
+	 * col_inv透明色色号
+	 * height图层高度
+	 * flags图层的标记信息
+	 */
 };
+//SHTCTL结构体管理图层
 struct SHTCTL {
-	unsigned char *vram, *map;
-	int xsize, ysize, top;
-	struct SHEET *sheets[MAX_SHEETS];
-	struct SHEET sheets0[MAX_SHEETS];
+	unsigned char *vram;	//VRAM地址
+	unsigned char *map;
+	int xsize, ysize, top;	//xsize,ysize画面大小，top最上面图层的高度
+	struct SHEET *sheets[MAX_SHEETS];	//按高度排序的图层信息
+	struct SHEET sheets0[MAX_SHEETS];	//图层信息
 };
 struct SHTCTL *shtctl_init(struct MEMMAN *memman, unsigned char *vram, int xsize, int ysize);
 struct SHEET *sheet_alloc(struct SHTCTL *ctl);
 void sheet_setbuf(struct SHEET *sht, unsigned char *buf, int xsize, int ysize, int col_inv);
-void sheet_updown(struct SHEET *sht, int height);
-void sheet_refresh(struct SHEET *sht, int bx0, int by0, int bx1, int by1);
-void sheet_slide(struct SHEET *sht, int vx0, int vy0);
-void sheet_free(struct SHEET *sht);
+void sheet_refreshmap(struct SHTCTL *ctl, int vx0, int vy0, int vx1, int vy1, int h0);
+void sheet_updown( struct SHEET *sht, int height);
+void sheet_refresh( struct SHEET *sht, int bx0, int by0, int bx1, int by1);
+void sheet_slide( struct SHEET *sht, int vx0, int vy0);
+void sheet_free( struct SHEET *sht);
+void sheet_refreshsub(struct SHTCTL *ctl, int vx0, int vy0, int vx1, int vy1, int h0, int h1);
+
 
 /* timer.c */
-#define MAX_TIMER		500
-struct TIMER {
+#define	MAX_TIMER	500
+struct TIMER
+{
 	struct TIMER *next;
 	unsigned int timeout, flags;
 	struct FIFO32 *fifo;
-	int data;
+	unsigned char data;
 };
 struct TIMERCTL {
-	unsigned int count, next;
+	unsigned int count,next,using;
 	struct TIMER *t0;
 	struct TIMER timers0[MAX_TIMER];
 };
@@ -180,6 +197,11 @@ extern struct TIMERCTL timerctl;
 void init_pit(void);
 struct TIMER *timer_alloc(void);
 void timer_free(struct TIMER *timer);
-void timer_init(struct TIMER *timer, struct FIFO32 *fifo, int data);
+void timer_init(struct TIMER *timer, struct FIFO32 *fifo, unsigned char data);
 void timer_settime(struct TIMER *timer, unsigned int timeout);
 void inthandler20(int *esp);
+
+/* mtask.c */
+extern struct TIMER *mt_timer;
+void mt_init(void);
+void mt_taskswitch(void);

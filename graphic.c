@@ -1,46 +1,48 @@
-/* 僌儔僼傿僢僋張棟娭學 */
+/* graphic.c
+ * 关于描画的处理
+ *
+  */
 
 #include "bootpack.h"
 
 void init_palette(void)
 {
 	static unsigned char table_rgb[16 * 3] = {
-		0x00, 0x00, 0x00,	/*  0:崟 */
-		0xff, 0x00, 0x00,	/*  1:柧傞偄愒 */
-		0x00, 0xff, 0x00,	/*  2:柧傞偄椢 */
-		0xff, 0xff, 0x00,	/*  3:柧傞偄墿怓 */
-		0x00, 0x00, 0xff,	/*  4:柧傞偄惵 */
-		0xff, 0x00, 0xff,	/*  5:柧傞偄巼 */
-		0x00, 0xff, 0xff,	/*  6:柧傞偄悈怓 */
-		0xff, 0xff, 0xff,	/*  7:敀 */
-		0xc6, 0xc6, 0xc6,	/*  8:柧傞偄奃怓 */
-		0x84, 0x00, 0x00,	/*  9:埫偄愒 */
-		0x00, 0x84, 0x00,	/* 10:埫偄椢 */
-		0x84, 0x84, 0x00,	/* 11:埫偄墿怓 */
-		0x00, 0x00, 0x84,	/* 12:埫偄惵 */
-		0x84, 0x00, 0x84,	/* 13:埫偄巼 */
-		0x00, 0x84, 0x84,	/* 14:埫偄悈怓 */
-		0x84, 0x84, 0x84	/* 15:埫偄奃怓 */
+		0x00, 0x00, 0x00,	/*  0:黑 */
+		0xff, 0x00, 0x00,	/*  1:亮红 */
+		0x00, 0xff, 0x00,	/*  2:亮绿 */
+		0xff, 0xff, 0x00,	/*  3:亮黄 */
+		0x00, 0x00, 0xff,	/*  4:亮蓝 */
+		0xff, 0x00, 0xff,	/*  5:亮紫 */
+		0x00, 0xff, 0xff,	/*  6:浅亮蓝 */
+		0xff, 0xff, 0xff,	/*  7:白 */
+		0xc6, 0xc6, 0xc6,	/*  8:亮灰 */
+		0x84, 0x00, 0x00,	/*  9:暗红 */
+		0x00, 0x84, 0x00,	/* 10:暗绿 */
+		0x84, 0x84, 0x00,	/* 11:暗黄 */
+		0x00, 0x00, 0x84,	/* 12:暗青 */
+		0x84, 0x00, 0x84,	/* 13:暗紫 */
+		0x00, 0x84, 0x84,	/* 14:浅暗蓝 */
+		0x84, 0x84, 0x84	/* 15:暗灰 */
 	};
-	set_palette(0, 15, table_rgb);
+	set_palette(0, 15, table_rgb);//调用函数设置调色板
 	return;
 
-	/* static char 柦椷偼丄僨乕僞偵偟偐巊偊側偄偗偳DB柦椷憡摉 */
 }
 
 void set_palette(int start, int end, unsigned char *rgb)
 {
 	int i, eflags;
-	eflags = io_load_eflags();	/* 妱傝崬傒嫋壜僼儔僌偺抣傪婰榐偡傞 */
-	io_cli(); 					/* 嫋壜僼儔僌傪0偵偟偰妱傝崬傒嬛巭偵偡傞 */
-	io_out8(0x03c8, start);
+	eflags = io_load_eflags();	/* 记录中断许可标志的值 */
+	io_cli(); 					/* 将中断许可标志置为0，表示禁止中断 */
+	io_out8(0x03c8, start);		//0x03c8为设备号码
 	for (i = start; i <= end; i++) {
-		io_out8(0x03c9, rgb[0] / 4);
+		io_out8(0x03c9, rgb[0] / 4);	//0x03c9为设备号码
 		io_out8(0x03c9, rgb[1] / 4);
 		io_out8(0x03c9, rgb[2] / 4);
 		rgb += 3;
 	}
-	io_store_eflags(eflags);	/* 妱傝崬傒嫋壜僼儔僌傪尦偵栠偡 */
+	io_store_eflags(eflags);	/* 复原中断许可标志 */
 	return;
 }
 
@@ -105,7 +107,7 @@ void putfonts8_asc(char *vram, int xsize, int x, int y, char c, unsigned char *s
 }
 
 void init_mouse_cursor8(char *mouse, char bc)
-/* 儅僂僗僇乕僜儖傪弨旛乮16x16乯 */
+/* 准备鼠标指针（16*16） */
 {
 	static char cursor[16][16] = {
 		"**************..",
@@ -130,19 +132,18 @@ void init_mouse_cursor8(char *mouse, char bc)
 	for (y = 0; y < 16; y++) {
 		for (x = 0; x < 16; x++) {
 			if (cursor[y][x] == '*') {
-				mouse[y * 16 + x] = COL8_000000;
+				mouse[y * 16 + x] = COL8_000000;//边缘黑色
 			}
 			if (cursor[y][x] == 'O') {
-				mouse[y * 16 + x] = COL8_FFFFFF;
+				mouse[y * 16 + x] = COL8_FFFFFF;//鼠标中间白色
 			}
 			if (cursor[y][x] == '.') {
-				mouse[y * 16 + x] = bc;
+				mouse[y * 16 + x] = bc;//如果是“.”则显示背景色
 			}
 		}
 	}
 	return;
 }
-
 void putblock8_8(char *vram, int vxsize, int pxsize,
 	int pysize, int px0, int py0, char *buf, int bxsize)
 {
