@@ -137,7 +137,7 @@ void inthandler20(int *esp)
 	timerctl.next = timerctl.t0->timeout;	//还有活动的定时器
 	if (ts != 0)
 	{
-		mt_taskswitch();
+		task_switch();
 	}
 	return;
 }
