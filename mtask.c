@@ -4,13 +4,9 @@
  */
  #include "bootpack.h"
 
- struct TIMER *mt_timer;
- int mt_tr;	//TR寄存器
-
-
-
 struct TASKCTL *taskctl;
 struct TIMER *task_timer;
+
 
 struct TASK *task_init(struct MEMMAN *memman)
 /* 任务相关结构体初始化 */
@@ -95,4 +91,44 @@ void task_switch(void)
 		farjmp(0, taskctl->tasks[taskctl->now]->sel);
 	}
 	return;
+}
+
+void task_sleep(struct TASK *task)
+/* 任务休眠 */
+{
+	int i;
+	char ts = 0;
+	if (task->flags == 2)//任务处于唤醒状态
+	{
+		if (task == taskctl->tasks[taskctl->now])
+		{
+			ts = 1;//让自己休眠，稍后需要进行任务切换
+		}
+		//寻找task所在的位置
+		for (i = 0; i < taskctl->running; i++)
+		{
+			if (taskctl->tasks[i] == task)
+			{
+				break;
+			}
+		}
+		taskctl->running--;
+		if (i < taskctl->now)
+		{
+			taskctl->now--;//需要移动成员，要相应的处理
+		}
+		for (; i < taskctl->running; i++)//移动成员
+		{
+			taskctl->tasks[i] = taskctl->tasks[i + 1];
+		}
+		task->flags = 1;//休眠
+		if (ts != 0)//任务切换
+		{
+			if (taskctl->now >= taskctl->running)
+			{
+				taskctl->now = 0;//针对now值出现的异常进行修正
+			}
+			farjmp(0, taskctl->tasks[taskctl->now]->sel);
+		}
+	}
 }

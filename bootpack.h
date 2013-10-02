@@ -57,8 +57,9 @@ struct FIFO32
 {
 	int *buf;
 	int p, q, size, free, flags;//p,q为队列前后指针，size为队列空间总大小，free为空闲空间大小，flags用于标志溢出
+	struct TASK *task;
 };
-void fifo32_init(struct FIFO32 *fifo, int size, int *buf);
+void fifo32_init(struct FIFO32 *fifo, int size, int *buf, struct TASK *task);
 int fifo32_put(struct FIFO32 *fifo, int data);
 int fifo32_get(struct FIFO32 *fifo);
 int fifo32_status(struct FIFO32 *fifo);
@@ -202,7 +203,7 @@ void timer_settime(struct TIMER *timer, unsigned int timeout);
 void inthandler20(int *esp);
 
 /* mtask.c */
-extern struct TIMER *mt_timer;
+extern struct TIMER *task_timer;
 #define MAX_TASKS		1000	//最大任务数量
 #define TASK_GDT0		3		//定义从GDT的第几号开始分配给TSS
 
@@ -232,4 +233,5 @@ struct TASK *task_init(struct MEMMAN *memman);
 struct TASK *task_alloc(void);
 void task_run(struct TASK *task);
 void task_switch(void);
+void task_sleep(struct TASK *task);
 
