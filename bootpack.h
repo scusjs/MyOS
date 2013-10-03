@@ -215,23 +215,39 @@ struct TSS32
 	int ldtr, iomap;
 };
 
+#define MAX_TASKS_LV	100
+#define MAX_TASKLEVELS	10
+
 struct TASK {
 	int sel, flags; //sel用于存放GDT的编号
 	struct TSS32 tss;
+	int priority;	//优先级
+	int level;
+};
+
+struct TASKLEVEL {
+	int running;	//正在运行的任务数量
+	int now;
+	struct TASK *tasks[MAX_TASKS_LV];
 };
 
 struct TASKCTL
 {
-	int running;	//正在运行的任务数量
-	int now;		//记录当前正在运行的是哪个任务
-	struct TASK *tasks[MAX_TASKS];
+	int now_lv;		//当前任务的LEVEL
+	char lv_change;	//下次任务切换是否改变LEVEL
+	struct TASKLEVEL level[MAX_TASKLEVELS];
 	struct TASK tasks0[MAX_TASKS];
 };
 
 
 struct TASK *task_init(struct MEMMAN *memman);
 struct TASK *task_alloc(void);
-void task_run(struct TASK *task);
+void task_run(struct TASK *task, int level, int priority);
 void task_switch(void);
 void task_sleep(struct TASK *task);
+struct TASK *tasknow(void);
+void task_add(struct TASK *task);
+void task_remove(struct TASK *task);
+void task_switchsub(void);
+
 

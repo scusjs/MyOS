@@ -14,16 +14,16 @@ void HariMain(void)
 {
 	
 	struct BOOTINFO *binfo = (struct BOOTINFO *) ADR_BOOTINFO;
-	struct FIFO32 fifo;
-	char s[40];
-	int fifobuf[128];
+	struct FIFO32 fifo;	//公共队列缓冲区管理结构
+	char s[40];	//输出缓冲区
+	int fifobuf[128];	//队列缓冲区
 	int mx, my, i;
 	int task_b_esp;	//为任务B定义的栈
-	unsigned int memtotal;
+	unsigned int memtotal;	//记录内存大小
 	int count;	//计数
 	struct MOUSE_DEC mdec;
 	struct MEMMAN *memman = (struct MEMMAN *) MEMMAN_ADDR;
-	struct SHTCTL *shtctl;
+	struct SHTCTL *shtctl;	//图层管理结构指针
 	struct SHEET *sht_back, *sht_mouse;
 	unsigned char *buf_back, buf_mouse[256];
 	struct SHEET *sht_win, *sht_win_b[3];	//添加窗口图层
@@ -43,25 +43,26 @@ void HariMain(void)
 
 
 	
-	init_gdtidt();
-	init_pic();
+	init_gdtidt();	//初始化GDT、IDT
+	init_pic();	//初始化PIC
 	io_sti(); //结束IDT/PIC初始化，解除CPU中断禁用
-	fifo32_init(&fifo, 128 , fifobuf,0);
-	init_pit();
-	init_keyboard(&fifo, 256);
-	enable_mouse(&fifo, 512, &mdec);
+	fifo32_init(&fifo, 128 , fifobuf,0);	//队列缓冲区初始化
+	init_pit();	//初始化PIT
+	init_keyboard(&fifo, 256);	//初始化键盘控制电路
+	enable_mouse(&fifo, 512, &mdec);	//激活鼠标
 	io_out8(PIC0_IMR, 0xf8); /* PIT和PIC1以外全部禁止(11111000) */
 	io_out8(PIC1_IMR, 0xef); //鼠标设置为许可
 	
-	memtotal = memtest(0x00400000, 0xbfffffff);
-	memman_init(memman);
-	memman_free(memman, 0x00001000, 0x0009e000); /* 0x00001000 - 0x0009efff */
-	memman_free(memman, 0x00400000, memtotal - 0x00400000);
+	memtotal = memtest(0x00400000, 0xbfffffff);	//检测4M~3G-1的内存  memtotal是内存实际大小
+	memman_init(memman);	//初始化内存管理结构
+	memman_free(memman, 0x00001000, 0x0009e000); /* 0x00001000 - 0x0009efff ，这段内存是“安全”的*/
+	memman_free(memman, 0x00400000, memtotal - 0x00400000);	//4M到实际内存大小
 
-	init_palette();
-	shtctl = shtctl_init(memman, binfo->vram, binfo->scrnx, binfo->scrny);
+	init_palette();	//初始化调色板
+	shtctl = shtctl_init(memman, binfo->vram, binfo->scrnx, binfo->scrny);	//初始化图层管理结构
 	task_a = task_init(memman);
 	fifo.task = task_a;
+	task_run(task_a, 1, 0);
 
 	
 	//sht_back
@@ -88,7 +89,7 @@ void HariMain(void)
 		task_b[i]->tss.fs = 1 * 8;
 		task_b[i]->tss.gs = 1 * 8;
 		*((int *) (task_b[i]->tss.esp + 4)) = (int) sht_win_b[i];
-		task_run(task_b[i]);
+		task_run(task_b[i], 2, i+1);
 	}
 
 
