@@ -12,7 +12,7 @@ struct TASK *task_init(struct MEMMAN *memman)
 /* 任务相关结构体初始化 */
 {
 	int i;
-	struct TASK *task;
+	struct TASK *task, *idle;
 	struct SEGMENT_DESCRIPTOR *gdt = (struct SEGMENT_DESCRIPTOR *) ADR_GDT;
 	taskctl = (struct TASKCTL *) memman_alloc_4k(memman, sizeof (struct TASKCTL));
 	for (i = 0; i < MAX_TASKS; i++) {
@@ -24,6 +24,7 @@ struct TASK *task_init(struct MEMMAN *memman)
 		taskctl->level[i].running = 0;
 		taskctl->level[i].now = 0;
 	}
+
 	task = task_alloc();
 	task->flags = 2; //活动中的标志
 	/* 
@@ -37,6 +38,17 @@ struct TASK *task_init(struct MEMMAN *memman)
 	load_tr(task->sel);	//修改TR寄存器
 	task_timer = timer_alloc();	//任务切换定时器
 	timer_settime(task_timer, task->priority);
+
+	idle = task_alloc();
+	idle->tss.esp = memman_alloc_4k(memman, 64 * 1024) + 64 * 1024;
+	idle->tss.eip = (int) &task_idle;
+	idle->tss.es = 1 * 8;
+	idle->tss.cs = 2 * 8;
+	idle->tss.ss = 1 * 8;
+	idle->tss.ds = 1 * 8;
+	idle->tss.fs = 1 * 8;
+	idle->tss.gs = 1 * 8;
+	task_run(idle, MAX_TASKLEVELS-1, 1);
 	return task;
 }
 
@@ -200,4 +212,13 @@ void task_switchsub(void)
 	taskctl->now_lv = i;
 	taskctl->lv_change = 0;
 	return;
+}
+
+void task_idle(void)
+//闲置任务，防止没有任务执行
+{
+	for (;;)
+	{
+		io_hlt();
+	}
 }
