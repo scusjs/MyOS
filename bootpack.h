@@ -223,6 +223,7 @@ struct TASK {
 	struct TSS32 tss;
 	int priority;	//优先级
 	int level;
+	struct FIFO32 fifo;
 };
 
 struct TASKLEVEL {
