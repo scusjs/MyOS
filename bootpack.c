@@ -11,13 +11,18 @@ void make_textbox8(struct SHEET *sht, int x0, int y0, int sx, int sy, int c);
 void make_wtitle8(unsigned char *buf, int xsize, char *title, char act);
 void console_task(struct SHEET *sheet);
 
+#define KEYCMD_LED		0xed		/* 需要发送的LED数据 */
+
+
 void HariMain(void)
 {
 	
 	struct BOOTINFO *binfo = (struct BOOTINFO *) ADR_BOOTINFO;
 	struct FIFO32 fifo;	//公共队列缓冲区管理结构
+	struct FIFO32 keycmd;	/* 用来存放向键盘发送的命令 */
 	char s[40];	//输出缓冲区
 	int fifobuf[128];	//队列缓冲区
+	int keycmd_buf[32];
 	int mx, my, i;
 	int task_b_esp;	//为任务B定义的栈
 	unsigned int memtotal;	//记录内存大小
@@ -55,6 +60,7 @@ void HariMain(void)
 	struct TASK *task_a, *task_cons;
 	int key_to = 0, key_shift = 0;
 	int key_leds = (binfo->leds >> 4) & 7;
+	int keycmd_wait = -1;
 
 
 	
@@ -67,6 +73,7 @@ void HariMain(void)
 	enable_mouse(&fifo, 512, &mdec);	//激活鼠标
 	io_out8(PIC0_IMR, 0xf8); /* PIT和PIC1以外全部禁止(11111000) */
 	io_out8(PIC1_IMR, 0xef); //鼠标设置为许可
+	fifo32_init(&keycmd, 32, keycmd_buf, 0);	/* 初始化键盘命令缓冲区 */
 	
 	memtotal = memtest(0x00400000, 0xbfffffff);	//检测4M~3G-1的内存  memtotal是内存实际大小
 	memman_init(memman);	//初始化内存管理结构
@@ -140,9 +147,23 @@ void HariMain(void)
 	sprintf(s, "memory %dMB   free : %dKB",
 			memtotal / (1024 * 1024), memman_total(memman) / 1024);
 	putfonts8_asc_sht(sht_back, 0, 32, COL8_FFFFFF, COL8_008484, s, 40);
-	
+	fifo32_put(&keycmd, KEYCMD_LED);
+	fifo32_put(&keycmd, key_leds);
 
-	for (;;) {
+	/* 所有对键盘LED的设置都是对键盘中的一块芯片8048的设置 */
+	/* 不是以前设置的i8042,但是通过i8042间接的对8048进行设置 */
+
+	for (;;) 
+	{
+		if (fifo32_status(&keycmd) > 0 && keycmd_wait < 0) 
+		{
+			/* 如果存在要向键盘发生的数据，则发送它 */
+			keycmd_wait = fifo32_get(&keycmd);	/* 取出数据 */
+			wait_KBC_sendready();	/* 清空i8042的输入缓冲区 */
+			io_out8(PORT_KEYDAT, keycmd_wait);	/* 向0x60端口发生0xed */
+		/* 发生了该命令之后，需要继续向0x60端口发生LED设置字节 */
+		/* 在下面等待确认是否有按下控制LED灯的键后来决定LED设置字节的值，然后再发生 */
+		}
 		io_cli();
 		if (fifo32_status(&fifo) == 0) {
 			task_sleep(task_a);
@@ -239,6 +260,35 @@ void HariMain(void)
 				if (i == 256 + 0xb6) //右shift松开 
 				{	
 					key_shift &= ~2;
+				}
+
+				if (i == 256 + 0x3a) 
+				{	/* CapsLock */
+					key_leds ^= 4;		/* key_leds中标识CapsLock的bit位取反 */
+					fifo32_put(&keycmd, KEYCMD_LED);	/* 向i8042发生命令来修改8048 */
+					fifo32_put(&keycmd, key_leds);		/* 改变CapsLock等的状态 */
+				}
+				if (i == 256 + 0x45) 
+				{	/* NumLock */
+					key_leds ^= 2;		/* 和CapsLock类似的处理 */
+					fifo32_put(&keycmd, KEYCMD_LED);
+					fifo32_put(&keycmd, key_leds);
+				}
+				if (i == 256 + 0x46) 
+				{	/* ScrollLock */
+					key_leds ^= 1;		/* 和CapsLock类似的处理 */
+					fifo32_put(&keycmd, KEYCMD_LED);
+					fifo32_put(&keycmd, key_leds);
+				}
+				/* 0xfa是ACK信息 */
+				if (i == 256 + 0xfa) 
+				{	/* 键盘成功接收到数据 */
+					keycmd_wait = -1;	/* 等于-1表示可以发送指令 */
+				}
+				if (i == 256 + 0xfe) 
+				{	/* 键盘没有成功接收到数据 */
+					wait_KBC_sendready();
+					io_out8(PORT_KEYDAT, keycmd_wait);	/* 重新发送上次的指令 */
 				}
 				//光标再显示
 				boxfill8(sht_win->buf, sht_win->bxsize, cursor_c, cursor_x, 28, cursor_x + 7, 43);
