@@ -25,6 +25,8 @@ void asm_inthandler21(void);
 void asm_inthandler27(void);
 void asm_inthandler2c(void);
 void farjmp(int eip, int cs);
+void asm_cons_putchar(void);
+void farcall(int eip, int cs);
 
 /* graphic.c */
 void init_palette(void);
