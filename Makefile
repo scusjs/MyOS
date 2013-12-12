@@ -55,7 +55,7 @@ dogged.img : ipl10.bin dogged.sys Makefile
 		copy from:dogged.sys to:@: \
 		copy from:ipl10.nas to:@: \
 		copy from:make.bat to:@: \
-		copy from:hlt.dog to:@: \
+		copy from:hello.dog to:@: \
 		imgout:dogged.img
 
 # 
