@@ -26,6 +26,7 @@ void asm_inthandler27(void);
 void asm_inthandler2c(void);
 void farjmp(int eip, int cs);
 void asm_cons_putchar(void);
+void asm_dogged_api(void);
 void farcall(int eip, int cs);
 
 /* graphic.c */
@@ -277,6 +278,7 @@ void cmd_type(struct CONSOLE *cons, int *fat, char *cmdline);
 int cmd_app(struct CONSOLE *cons, int *fat, char *cmdline);
 void cons_putstr(struct CONSOLE *cons, char *s);
 void cons_putstr_withlen (struct CONSOLE *cons, char *s, int len);
+void dogged_api(int edi, int esi, int ebp, int esp, int ebx, int edx, int ecx, int eax);
 
 /* file.c */
 struct FILEINFO {

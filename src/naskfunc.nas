@@ -1,14 +1,14 @@
 ; naskfunc
 ; TAB=4
 
-[FORMAT "WCOFF"]				; ÖÆ×÷Ä¿±êÎÄ¼şµÄÄ£Ê½	
-[INSTRSET "i486p"]				; ±íÊ¾ÊÊÓÃÓÚ486£¬¼´Ê¹ÓÃ32Î»¼Ä´æÆ÷
-[BITS 32]						; ÖÆ×÷32Î»Ä£Ê½ÓÃµÄ»úÆ÷ÓïÑÔ
+[FORMAT "WCOFF"]				; åˆ¶ä½œç›®æ ‡æ–‡ä»¶çš„æ¨¡å¼	
+[INSTRSET "i486p"]				; è¡¨ç¤ºé€‚ç”¨äº486ï¼Œå³ä½¿ç”¨32ä½å¯„å­˜å™¨
+[BITS 32]						; åˆ¶ä½œ32ä½æ¨¡å¼ç”¨çš„æœºå™¨è¯­è¨€
 
 
-; ÖÆ×÷Ä¿±êÎÄ¼şµÄĞÅÏ¢
+; åˆ¶ä½œç›®æ ‡æ–‡ä»¶çš„ä¿¡æ¯
 
-[FILE "naskfunc.nas"]			; Ô´ÎÄ¼şÃûĞÅÏ¢
+[FILE "naskfunc.nas"]			; æºæ–‡ä»¶åä¿¡æ¯
 
 		GLOBAL	_io_hlt, _io_cli, _io_sti, _io_stihlt
 		GLOBAL	_io_in8,  _io_in16,  _io_in32
@@ -18,11 +18,11 @@
 		GLOBAL	_load_cr0, _store_cr0
 		GLOBAL	_load_tr
 		GLOBAL	_farjmp, _farcall
-		GLOBAL	_asm_cons_putchar
+		GLOBAL	_asm_cons_putchar, _asm_dogged_api
 		GLOBAL	_asm_inthandler20, _asm_inthandler21, _asm_inthandler27, _asm_inthandler2c
 		GLOBAL	_memtest_sub
 		EXTERN	_inthandler20, _inthandler21, _inthandler27, _inthandler2c
-		EXTERN	_cons_putchar
+		EXTERN	_cons_putchar, _dogged_api
 
 [SECTION .text]
 
@@ -31,11 +31,11 @@ _io_hlt:	; void io_hlt(void);
 		RET
 
 _io_cli:	; void io_cli(void);
-		CLI 						; ÖÃIF=0£¬CPU½ûÖ¹ÏìÓ¦Íâ²¿ÖĞ¶Ï 
+		CLI 						; ç½®IF=0ï¼ŒCPUç¦æ­¢å“åº”å¤–éƒ¨ä¸­æ–­ 
 		RET
 
 _io_sti:	; void io_sti(void);
-		STI 						; ÖÃIF=1£¬Ê¹CPUÔÊĞíÏòÓ¦Íâ²¿ÖĞ¶Ï 
+		STI 						; ç½®IF=1ï¼Œä½¿CPUå…è®¸å‘åº”å¤–éƒ¨ä¸­æ–­ 
 		RET
 
 _io_stihlt:	; void io_stihlt(void);
@@ -91,13 +91,13 @@ _io_store_eflags:	; void io_store_eflags(int eflags);
 _load_gdtr:		; void load_gdtr(int limit, int addr);
 		MOV		AX,[ESP+4]		; limit
 		MOV		[ESP+6],AX
-		LGDT	[ESP+6]			; ½«Ô´²Ù×÷ÊıÖĞµÄÖµ¼ÓÔØµ½È«¾ÖÃèÊö·û±í¸ñ¼Ä´æÆ÷ (GDTR) 
+		LGDT	[ESP+6]			; å°†æºæ“ä½œæ•°ä¸­çš„å€¼åŠ è½½åˆ°å…¨å±€æè¿°ç¬¦è¡¨æ ¼å¯„å­˜å™¨ (GDTR) 
 		RET
 
 _load_idtr:		; void load_idtr(int limit, int addr);
 		MOV		AX,[ESP+4]		; limit
 		MOV		[ESP+6],AX
-		LIDT	[ESP+6]			; ½«Ô´²Ù×÷ÊıÖĞµÄÖµ¼ÓÔØµ½ÖĞ¶ÏÃèÊö·û±í¸ñ¼Ä´æÆ÷ (IDTR) 
+		LIDT	[ESP+6]			; å°†æºæ“ä½œæ•°ä¸­çš„å€¼åŠ è½½åˆ°ä¸­æ–­æè¿°ç¬¦è¡¨æ ¼å¯„å­˜å™¨ (IDTR) 
 		RET
 
 _load_cr0:		; int load_cr0(void);
@@ -179,7 +179,7 @@ _asm_inthandler2c:
 		IRETD
 
 _memtest_sub:	; unsigned int memtest_sub(unsigned int start, unsigned int end)
-		PUSH	EDI						; £¨ÓÉÓÚ»¹ÒªÊ¹ÓÃEBX, ESI, EDI£©
+		PUSH	EDI						; ï¼ˆç”±äºè¿˜è¦ä½¿ç”¨EBX, ESI, EDIï¼‰
 		PUSH	ESI
 		PUSH	EBX
 		MOV		ESI,0xaa55aa55			; pat0 = 0xaa55aa55;
@@ -219,14 +219,23 @@ _asm_cons_putchar:
 		STI
 		PUSHAD
 		PUSH	1
-		AND		EAX,0xff	; ½«AHºÍEAXµÄ¸ßÎ»ÖÃÖÃ1£¬½«EAXÖÃÎªÒÑ´æÈë×Ö·û±àÂëµÄ×´Ì¬
+		AND		EAX,0xff	; å°†AHå’ŒEAXçš„é«˜ä½ç½®ç½®1ï¼Œå°†EAXç½®ä¸ºå·²å­˜å…¥å­—ç¬¦ç¼–ç çš„çŠ¶æ€
 		PUSH	EAX
-		PUSH	DWORD [0x0fec]	; ¶ÁÈ¡ÄÚ´æ²¢PUSH¸ÃÖµ
+		PUSH	DWORD [0x0fec]	; è¯»å–å†…å­˜å¹¶PUSHè¯¥å€¼
 		CALL	_cons_putchar
-		ADD		ESP,12		; ½«Õ»ÖĞµÄÊı¾İ¶ªÆú
+		ADD		ESP,12		; å°†æ ˆä¸­çš„æ•°æ®ä¸¢å¼ƒ
 		POPAD
 		IRETD
 
 _farcall:		; void farcall(int eip, int cs);
 		CALL	FAR [ESP+4]
 		RET
+
+_asm_dogged_api:	; void dogged_api(int edi, int esi, int ebp, int esp, int ebx, int edx, int ecx, int eax);
+		STI
+		PUSHAD	;ä¿å­˜å¯„å­˜å™¨çš„å€¼
+		PUSHAD	;å‘Cä¸­çš„å‡½æ•°ä¼ é€’å€¼
+		CALL	_dogged_api
+		ADD 	ESP,32
+		POPAD
+		IRETD

@@ -1,48 +1,49 @@
 /* dsctbl.c
- * ����GDT,IDT��
- * descriptor table�Ĵ���
+ * 关于GDT,IDT等
+ * descriptor table的处理
  * 
  *
- *����GDT 
- * sd��GDT����ַ 
- * limit�����޳�  
- * base:��ָ���������ݶε�ַ 
- * ar:�ι�������  00000000(0x00)��δʹ�õļ�¼�� 
- *       10010010(0x92)��os�ã��ɶ�д�Σ�����ִ�У�ring0 
- *       10011010(0x9a)��os�ã���ִ�жΣ��ɶ�����д��ring0 
- *       11110010(0xf2)��app�ã��ɶ�д������ִ�У�ring3 
- *       11111010(0xfa)��app�ã���ִ�У��ɶ�����д��ring3 
+ *设置GDT 
+ * sd：GDT表首址 
+ * limit：段限长  
+ * base:段指向代码或数据段地址 
+ * ar:段管理属性  00000000(0x00)：未使用的记录表 
+ *       10010010(0x92)：os用，可读写段，不可执行，ring0 
+ *       10011010(0x9a)：os用，可执行段，可读不可写，ring0 
+ *       11110010(0xf2)：app用，可读写，不可执行，ring3 
+ *       11111010(0xfa)：app用，可执行，可读不可写，ring3 
  */
 
 #include "bootpack.h"
 
 void init_gdtidt(void)
 {
-	struct SEGMENT_DESCRIPTOR *gdt = (struct SEGMENT_DESCRIPTOR *) ADR_GDT;//����û�б�ռ�õ��ڴ�ռ�
-	struct GATE_DESCRIPTOR    *idt = (struct GATE_DESCRIPTOR    *) ADR_IDT;//����û�б�ռ�õ��ڴ�ռ�
+	struct SEGMENT_DESCRIPTOR *gdt = (struct SEGMENT_DESCRIPTOR *) ADR_GDT;//任意没有被占用的内存空间
+	struct GATE_DESCRIPTOR    *idt = (struct GATE_DESCRIPTOR    *) ADR_IDT;//任意没有被占用的内存空间
 	int i;
 
-	/* GDT�ĳ�ʼ�� */
-	for (i = 0; i < 8192; i++) {//��ѡ������12λ��ʾ��ֵ�������8192 
-		set_segmdesc(gdt + i, 0, 0, 0);//ʵ�����ڲ�����ת����gdt+i*8������ȫ����ʼ��Ϊ0
+	/* GDT的初始化 */
+	for (i = 0; i < 8192; i++) {//段选择子用12位表示段值，故最大8192 
+		set_segmdesc(gdt + i, 0, 0, 0);//实质上内部存在转换：gdt+i*8。这里全部初始化为0
 	}
-	//0�Ŷα���NULL Description  
-	set_segmdesc(gdt + 1, 0xffffffff,   0x00000000, AR_DATA32_RW);//cpu�ܹ�����ȫ��4G�ڴ� os���ݶ�
-	set_segmdesc(gdt + 2, LIMIT_BOTPAK, ADR_BOTPAK, AR_CODE32_ER);//bootpack.hrb����512KB�ڴ� os�����
-	load_gdtr(LIMIT_GDT, ADR_GDT);//��GDTR��ֵ����GDT���׵�ַ���ص�GDTR  
+	//0号段保留NULL Description  
+	set_segmdesc(gdt + 1, 0xffffffff,   0x00000000, AR_DATA32_RW);//cpu能管理的全部4G内存 os数据段
+	set_segmdesc(gdt + 2, LIMIT_BOTPAK, ADR_BOTPAK, AR_CODE32_ER);//bootpack.hrb所在512KB内存 os代码段
+	load_gdtr(LIMIT_GDT, ADR_GDT);//给GDTR赋值。将GDT表首地址加载到GDTR  
 
-	/* IDT�ĳ�ʼ�� */
+	/* IDT的初始化 */
 	for (i = 0; i < 256; i++) {
 		set_gatedesc(idt + i, 0, 0, 0);
 	}
 	load_idtr(LIMIT_IDT, ADR_IDT);
 
-	/* IDT���趨 */
+	/* IDT的设定 */
 	set_gatedesc(idt + 0x20, (int) asm_inthandler20, 2 * 8, AR_INTGATE32);
 	set_gatedesc(idt + 0x21, (int) asm_inthandler21, 2 * 8, AR_INTGATE32);
 	set_gatedesc(idt + 0x27, (int) asm_inthandler27, 2 * 8, AR_INTGATE32);
 	set_gatedesc(idt + 0x2c, (int) asm_inthandler2c, 2 * 8, AR_INTGATE32);
 	set_gatedesc(idt + 0x40, (int) asm_cons_putchar, 2 * 8, AR_INTGATE32);
+	set_gatedesc(idt + 0x41, (int) asm_dogged_api, 2 * 8, AR_INTGATE32);
 
 	return;
 }
