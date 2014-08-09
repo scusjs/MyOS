@@ -222,14 +222,9 @@ void cmd_mem(struct CONSOLE *cons, unsigned int memtotal)
 /* 显示内存信息 */
 {
 	struct MEMMAN *memman = (struct MEMMAN *) MEMMAN_ADDR;
-	char s[30];
-	sprintf(s, "total %dMB", memtotal / (1024 * 1024));
-	putfonts8_asc_sht(cons->sht, 8, cons->cur_y, COL8_FFFFFF, COL8_000000, s, 30);
-	cons_newline(cons);
-	sprintf(s, "free %dKB", memman_total(memman) / 1024);
-	putfonts8_asc_sht(cons->sht, 8, cons->cur_y, COL8_FFFFFF, COL8_000000, s, 30);
-	cons_newline(cons);
-	cons_newline(cons);
+	char s[60];
+	sprintf(s, "total %dMB\nfree %dKB\n\n", memtotal / (1024 * 1024), memman_total(memman) / 1024);
+	cons_putstr(cons, s);
 	return;
 }
 
@@ -266,7 +261,7 @@ void cmd_dir(struct CONSOLE *cons)
 		{
 			if ((finfo[i].type & 0x18) == 0)
 			{
-				sprintf(s, "filename.ext %7d", finfo[i].size);
+				sprintf(s, "filename.ext %7d\n", finfo[i].size);
 				for (j = 0; j < 8; j++)
 				{
 					s[j] = finfo[i].name[j];
@@ -274,11 +269,12 @@ void cmd_dir(struct CONSOLE *cons)
 				s[9] = finfo[i].ext[0];
 				s[10] = finfo[i].ext[1];
 				s[11] = finfo[i].ext[2];
-				putfonts8_asc_sht(cons->sht, 8, cons->cur_y, COL8_FFFFFF, COL8_000000, s, 30);
-				cons_newline(cons);
+				cons_putstr(cons, s);
 			}
 		}
 	}
+	cons_newline(cons);
+	return;
 }
 
 void cmd_type(struct CONSOLE *cons, int *fat, char *cmdline)
@@ -296,21 +292,16 @@ void cmd_type(struct CONSOLE *cons, int *fat, char *cmdline)
 	}
 	struct FILEINFO *finfo = file_search(cmdline + x, (struct FILEINFO *) (ADR_DISKIMG + 0x002600), 224);
 	char *p;
-	int i;
 	if (finfo != 0)
 	{
 		p = (char *) memman_alloc_4k(memman, finfo->size);
 		file_loadfile(finfo->clustno, finfo->size, p, fat, (char *) (ADR_DISKIMG + 0x003e00));
-		for (i = 0; i < finfo->size; i++)
-		{
-			cons_putchar(cons, p[i], 1);
-		}
+		cons_putstr_withlen(cons, p, finfo->size);
 		memman_free(memman, (int) p, finfo->size);
 	}
 	else
 	{
-		putfonts8_asc_sht(cons->sht, 8, cons->cur_y, COL8_FFFFFF, COL8_000000, "File not found.", 15);
-		cons_newline(cons);
+		cons_putstr(cons, "File not found.\n");
 	}
 	cons_newline(cons);
 	return;
@@ -365,7 +356,16 @@ int cmd_app(struct CONSOLE *cons, int *fat, char *cmdline)
 
 void cons_putstr(struct CONSOLE *cons, char *s)
 {
-	while (s != 0)
+	while (*s != 0)
+	{
+		cons_putchar(cons, *s, 1);
+		s ++;
+	}
+}
+
+void cons_putstr_withlen(struct CONSOLE *cons, char *s, int len)
+{
+	while (len --)
 	{
 		cons_putchar(cons, *s, 1);
 		s ++;
