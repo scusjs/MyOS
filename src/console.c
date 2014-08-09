@@ -363,3 +363,12 @@ int cmd_app(struct CONSOLE *cons, int *fat, char *cmdline)
 	return 0;
 }
 
+void cons_putstr(struct CONSOLE *cons, char *s)
+{
+	while (s != 0)
+	{
+		cons_putchar(cons, *s, 1);
+		s ++;
+	}
+}
+
