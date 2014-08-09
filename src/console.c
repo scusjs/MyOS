@@ -6,6 +6,9 @@
 #include <stdio.h>
 #include <string.h>
 
+#define CS_BASE 0xfe8
+#define CONS_BASE 0x0fec
+
 void console_task(struct SHEET *sheet, unsigned int memtotal)
 {
 	struct TIMER *timer;
@@ -18,7 +21,7 @@ void console_task(struct SHEET *sheet, unsigned int memtotal)
 	cons.cur_x = 8;
 	cons.cur_y = 28;
 	cons.cur_c = -1;
-	*((int *) 0x0fec) = (int) &cons;
+	*((int *) CONS_BASE) = (int) &cons;
 
 	fifo32_init(&task->fifo, 128, fifobuf, task);
 	timer = timer_alloc();
@@ -340,9 +343,10 @@ int cmd_app(struct CONSOLE *cons, int *fat, char *cmdline)
 
 
 
-	if (finfo != 0)
+	if (finfo != 0)//文件被找到
 	{
 		p = (char *) memman_alloc_4k(memman, finfo->size);
+		*((int *) CS_BASE) = (int) p;
 		file_loadfile(finfo->clustno, finfo->size, p, fat, (char *) (ADR_DISKIMG + 0x003e00));
 		set_segmdesc(gdt + 1003, finfo->size - 1, (int) p, AR_CODE32_ER);//将其注册到GDT的1003号
 		farcall(0, 1003*8);
@@ -374,7 +378,9 @@ void cons_putstr_withlen(struct CONSOLE *cons, char *s, int len)
 
 void dogged_api(int edi, int esi, int ebp, int esp, int ebx, int edx, int ecx, int eax)
 {
-	struct CONSOLE *cons = (struct CONSOLE *) *((int *) 0x0fec);
+
+	int cs_base = *((int *) CS_BASE);
+	struct CONSOLE *cons = (struct CONSOLE *) *((int *) CONS_BASE);
 
 	if (edx == 1)
 	{
@@ -382,11 +388,11 @@ void dogged_api(int edi, int esi, int ebp, int esp, int ebx, int edx, int ecx, i
 	}
 	else if (edx == 2)
 	{
-		cons_putstr(cons, (char *) ebx);
+		cons_putstr(cons, (char *) ebx + cs_base);
 	}
 	else if (edx == 3)
 	{
-		cons_putstr_withlen(cons, (char *) ebx, ecx);
+		cons_putstr_withlen(cons, (char *) ebx + cs_base, ecx);
 	}
 	return;
 }

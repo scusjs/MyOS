@@ -16,6 +16,15 @@ local.properties
 .settings/
 .loadpath
 
+# my ignored
+*.bin
+*.lst
+*.obj
+bootpack.map
+bootpack.bim
+bootpack.hrb
+dogged.sys
+
 # External tool builders
 .externalToolBuilders/
 
