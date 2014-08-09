@@ -88,15 +88,6 @@ hankaku.txt： 字库文件<br />
 > 错误命令提醒<br />
 19.对应用提供显示字符串API<br />
 
-更多信息
----------
-欢迎访问我的博客获得更多相关的信息:<br />
-1.[scusjs的专栏](http://blog.csdn.net/scusjs)<br />  
-~~2.[成长的路，点滴记录](http://falcon_s.byethost15.com/)~~<br />
-
-
-
-
 By SCUSJS
 
 
