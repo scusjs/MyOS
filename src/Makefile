@@ -12,7 +12,7 @@ GAS2NASK = $(TOOLPATH)gas2nask.exe -a
 OBJ2BIM  = $(TOOLPATH)obj2bim.exe
 MAKEFONT = $(TOOLPATH)makefont.exe
 BIN2OBJ  = $(TOOLPATH)bin2obj.exe
-BIM2HRB  = $(TOOLPATH)bim2hrb.exe
+BIM2DOG  = $(TOOLPATH)bim2dog.exe
 RULEFILE = $(TOOLPATH)dogged/dogged.rul
 EDIMG    = $(TOOLPATH)edimg.exe
 IMGTOL   = $(TOOLPATH)imgtol.com
@@ -43,8 +43,8 @@ bootpack.bim : $(OBJS_BOOTPACK) Makefile
 		$(OBJS_BOOTPACK)
 # 3MB+64KB=3136KB
 
-bootpack.hrb : bootpack.bim Makefile
-	$(BIM2HRB) bootpack.bim bootpack.hrb 0
+bootpack.dog : bootpack.bim Makefile
+	$(BIM2DOG) bootpack.bim bootpack.dog 0
 
 hello.dog : hello.nas Makefile
 	$(NASK) hello.nas hello.dog hello.lst
@@ -52,10 +52,22 @@ hello.dog : hello.nas Makefile
 hello2.dog : hello2.nas Makefile
 	$(NASK) hello2.nas hello2.dog hello2.lst
 
-dogged.sys : asmhead.bin bootpack.hrb Makefile
-	copy /B asmhead.bin+bootpack.hrb dogged.sys
+a.bim : a.obj a_nask.obj Makefile
+	$(OBJ2BIM) @$(RULEFILE) out:a.bim map:a.map a.obj a_nask.obj
 
-dogged.img : ipl10.bin dogged.sys hello.dog hello2.dog Makefile
+a.dog : a.bim Makefile
+	$(BIM2DOG) a.bim a.dog 0
+
+hello3.bim : hello3.obj a_nask.obj Makefile
+	$(OBJ2BIM) @$(RULEFILE) out:hello3.bim map:hello3.map hello3.obj a_nask.obj
+
+hello3.dog : hello3.bim Makefile
+	$(BIM2DOG) hello3.bim hello3.dog 0
+
+dogged.sys : asmhead.bin bootpack.dog Makefile
+	copy /B asmhead.bin+bootpack.dog dogged.sys
+
+dogged.img : ipl10.bin dogged.sys hello.dog hello2.dog a.dog hello3.dog Makefile
 	$(EDIMG)   imgin:../z_tools/fdimg0at.tek \
 		wbinimg src:ipl10.bin len:512 from:0 to:0 \
 		copy from:dogged.sys to:@: \
@@ -63,6 +75,8 @@ dogged.img : ipl10.bin dogged.sys hello.dog hello2.dog Makefile
 		copy from:make.bat to:@: \
 		copy from:hello.dog to:@: \
 		copy from:hello2.dog to:@: \
+		copy from:hello3.dog to:@: \
+		copy from:a.dog to:@: \
 		imgout:dogged.img
 
 # 
@@ -96,7 +110,7 @@ clean :
 	-$(DEL) *.obj
 	-$(DEL) bootpack.map
 	-$(DEL) bootpack.bim
-	-$(DEL) bootpack.hrb
+	-$(DEL) bootpack.dog
 	-$(DEL) dogged.sys
 	-$(DEL) *.dog
 
