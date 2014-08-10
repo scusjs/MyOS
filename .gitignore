@@ -21,6 +21,7 @@ local.properties
 *.lst
 *.obj
 *.dog
+*.bim
 bootpack.map
 bootpack.bim
 bootpack.hrb
