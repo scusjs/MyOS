@@ -46,10 +46,16 @@ bootpack.bim : $(OBJS_BOOTPACK) Makefile
 bootpack.hrb : bootpack.bim Makefile
 	$(BIM2HRB) bootpack.bim bootpack.hrb 0
 
+hello.dog : hello.nas Makefile
+	$(NASK) hello.nas hello.dog hello.lst
+
+hello2.dog : hello2.nas Makefile
+	$(NASK) hello2.nas hello2.dog hello2.lst
+
 dogged.sys : asmhead.bin bootpack.hrb Makefile
 	copy /B asmhead.bin+bootpack.hrb dogged.sys
 
-dogged.img : ipl10.bin dogged.sys Makefile
+dogged.img : ipl10.bin dogged.sys hello.dog hello2.dog Makefile
 	$(EDIMG)   imgin:../z_tools/fdimg0at.tek \
 		wbinimg src:ipl10.bin len:512 from:0 to:0 \
 		copy from:dogged.sys to:@: \
@@ -92,6 +98,7 @@ clean :
 	-$(DEL) bootpack.bim
 	-$(DEL) bootpack.hrb
 	-$(DEL) dogged.sys
+	-$(DEL) *.dog
 
 src_only :
 	$(MAKE) clean

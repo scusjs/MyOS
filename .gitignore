@@ -20,6 +20,7 @@ local.properties
 *.bin
 *.lst
 *.obj
+*.dog
 bootpack.map
 bootpack.bim
 bootpack.hrb

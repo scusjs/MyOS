@@ -5,4 +5,4 @@
 	INT 	0x40
 	RETF
 msg:
-	DB		"hello",0
+	DB		"what a fuck",0
