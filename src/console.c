@@ -349,6 +349,17 @@ int cmd_app(struct CONSOLE *cons, int *fat, char *cmdline)
 		*((int *) CS_BASE) = (int) p;
 		file_loadfile(finfo->clustno, finfo->size, p, fat, (char *) (ADR_DISKIMG + 0x003e00));
 		set_segmdesc(gdt + 1003, finfo->size - 1, (int) p, AR_CODE32_ER);//将其注册到GDT的1003号
+		if (finfo->size >= 8 && strncmp(p + 4, "Hari", 4) == 0)
+		{
+			int i = 0;
+			int call_info[6] = {0xe8, 0x16, 0x00, 0x00, 0x00, 0xcb};
+			while (i < 6)
+			{
+				p[i] = call_info[i];
+				i ++;
+			}
+		}
+
 		farcall(0, 1003*8);
 		memman_free_4k(memman, (int) p, finfo->size);
 		cons_newline(cons);
