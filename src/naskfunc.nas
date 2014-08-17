@@ -373,7 +373,7 @@ _asm_dogged_api:	; void dogged_api(int edi, int esi, int ebp, int esp, int ebx, 
 		MOV 	ESP,ECX
 		STI
 		CALL	_dogged_api
-		MOV 	ECX,[ESP]
+		MOV 	ECX,[ESP+32]
 		MOV 	EAX,[ESP+36] 	;取应用程序SS
 		CLI
 		MOV 	SS,AX
