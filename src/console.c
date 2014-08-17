@@ -8,7 +8,6 @@
 
 #define CS_BASE 0xfe8
 #define CONS_BASE 0x0fec
-#define APP_MEM_SIZE 64 * 1024
 
 void console_task(struct SHEET *sheet, unsigned int memtotal)
 {
@@ -317,7 +316,7 @@ int cmd_app(struct CONSOLE *cons, int *fat, char *cmdline)
 	struct MEMMAN *memman = (struct MEMMAN *) MEMMAN_ADDR;
 	struct FILEINFO *finfo;
 	struct SEGMENT_DESCRIPTOR *gdt = (struct SEGMENT_DESCRIPTOR *) ADR_GDT;
-	char *p, *app_location;
+	char *p;
 	char name[18];
 	int i;
 
@@ -347,11 +346,9 @@ int cmd_app(struct CONSOLE *cons, int *fat, char *cmdline)
 	if (finfo != 0)//文件被找到
 	{
 		p = (char *) memman_alloc_4k(memman, finfo->size);
-		app_location = (char *) memman_alloc_4k(memman, APP_MEM_SIZE);
 		*((int *) CS_BASE) = (int) p;
 		file_loadfile(finfo->clustno, finfo->size, p, fat, (char *) (ADR_DISKIMG + 0x003e00));
 		set_segmdesc(gdt + 1003, finfo->size - 1, (int) p, AR_CODE32_ER);//将其注册到GDT的1003号
-		set_segmdesc(gdt + 1004, APP_MEM_SIZE - 1, (int) app_location, AR_DATA32_RW);
 		if (finfo->size >= 8 && strncmp(p + 4, "Hari", 4) == 0)
 		{
 			int i = 0;
@@ -363,10 +360,8 @@ int cmd_app(struct CONSOLE *cons, int *fat, char *cmdline)
 			}
 		}
 
-		//farcall(0, 1003*8);
-		start_app(0, 1003 * 8, APP_MEM_SIZE, 1004 * 8);
+		farcall(0, 1003*8);
 		memman_free_4k(memman, (int) p, finfo->size);
-		memman_free_4k(memman, (int) app_location, APP_MEM_SIZE);
 		cons_newline(cons);
 		return 1;
 	}

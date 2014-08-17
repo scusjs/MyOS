@@ -18,7 +18,6 @@
 		GLOBAL	_load_cr0, _store_cr0
 		GLOBAL	_load_tr
 		GLOBAL	_farjmp, _farcall
-		GLOBAL	_start_app
 		GLOBAL	_asm_cons_putchar, _asm_dogged_api
 		GLOBAL	_asm_inthandler20, _asm_inthandler21, _asm_inthandler27, _asm_inthandler2c
 		GLOBAL	_memtest_sub
@@ -118,174 +117,66 @@ _asm_inthandler20:
 		PUSH	ES
 		PUSH	DS
 		PUSHAD
-		MOV		AX,SS
-		CMP 	AX,1*8
-		JNE 	.from_app
-
 		MOV		EAX,ESP
-		PUSH 	SS
 		PUSH	EAX
 		MOV		AX,SS
 		MOV		DS,AX
 		MOV		ES,AX
 		CALL	_inthandler20
-
-		ADD 	ESP,8
+		POP		EAX
 		POPAD
 		POP		DS
 		POP		ES
 		IRETD
-
-.from_app:
-;当应用程序活动时发生的中断
-		MOV 	EAP,1*8
-		MOV 	DS,AX
-		MOV 	ECX,[0xfe4] 	;操作系统的esp
-		ADD 	ECX,-8
-		MOV 	[ECX+4],SS
-		MOV 	[ECX],ESP
-		MOV 	SS,AX
-		MOV 	ES,AX
-		MOV 	ESP,ECX
-		CALL 	_inthandler20	
-		POP 	ECX
-		POP 	EAX
-		MOV 	SS,AX
-		MOV 	ESP,ECX
-		POPAD
-		POP 	DS
-		POP 	ES
-		IRETD	
 
 
 _asm_inthandler21:
 		PUSH	ES
 		PUSH	DS
 		PUSHAD
-		MOV		AX,SS
-		CMP 	AX,1*8
-		JNE 	.from_app
-
 		MOV		EAX,ESP
-		PUSH 	SS
 		PUSH	EAX
 		MOV		AX,SS
 		MOV		DS,AX
 		MOV		ES,AX
 		CALL	_inthandler21
-
-		ADD 	ESP,8
+		POP		EAX
 		POPAD
 		POP		DS
 		POP		ES
 		IRETD
-
-.from_app:
-;当应用程序活动时发生的中断
-		MOV 	EAP,1*8
-		MOV 	DS,AX
-		MOV 	ECX,[0xfe4] 	;操作系统的esp
-		ADD 	ECX,-8
-		MOV 	[ECX+4],SS
-		MOV 	[ECX],ESP
-		MOV 	SS,AX
-		MOV 	ES,AX
-		MOV 	ESP,ECX
-		CALL 	_inthandler21	
-		POP 	ECX
-		POP 	EAX
-		MOV 	SS,AX
-		MOV 	ESP,ECX
-		POPAD
-		POP 	DS
-		POP 	ES
-		IRETD	
 
 _asm_inthandler27:
 		PUSH	ES
 		PUSH	DS
 		PUSHAD
-		MOV		AX,SS
-		CMP 	AX,1*8
-		JNE 	.from_app
-
 		MOV		EAX,ESP
-		PUSH 	SS
 		PUSH	EAX
 		MOV		AX,SS
 		MOV		DS,AX
 		MOV		ES,AX
 		CALL	_inthandler27
-
-		ADD 	ESP,8
+		POP		EAX
 		POPAD
 		POP		DS
 		POP		ES
 		IRETD
-
-.from_app:
-;当应用程序活动时发生的中断
-		MOV 	EAP,1*8
-		MOV 	DS,AX
-		MOV 	ECX,[0xfe4] 	;操作系统的esp
-		ADD 	ECX,-8
-		MOV 	[ECX+4],SS
-		MOV 	[ECX],ESP
-		MOV 	SS,AX
-		MOV 	ES,AX
-		MOV 	ESP,ECX
-		CALL 	_inthandler27	
-		POP 	ECX
-		POP 	EAX
-		MOV 	SS,AX
-		MOV 	ESP,ECX
-		POPAD
-		POP 	DS
-		POP 	ES
-		IRETD	
 
 _asm_inthandler2c:
 		PUSH	ES
 		PUSH	DS
 		PUSHAD
-		MOV		AX,SS
-		CMP 	AX,1*8
-		JNE 	.from_app
-
 		MOV		EAX,ESP
-		PUSH 	SS
 		PUSH	EAX
 		MOV		AX,SS
 		MOV		DS,AX
 		MOV		ES,AX
 		CALL	_inthandler2c
-
-		ADD 	ESP,8
+		POP		EAX
 		POPAD
 		POP		DS
 		POP		ES
 		IRETD
-
-.from_app:
-;当应用程序活动时发生的中断
-		MOV 	EAP,1*8
-		MOV 	DS,AX
-		MOV 	ECX,[0xfe4] 	;操作系统的esp
-		ADD 	ECX,-8
-		MOV 	[ECX+4],SS
-		MOV 	[ECX],ESP
-		MOV 	SS,AX
-		MOV 	ES,AX
-		MOV 	ESP,ECX
-		CALL 	_inthandler2c	
-		POP 	ECX
-		POP 	EAX
-		MOV 	SS,AX
-		MOV 	ESP,ECX
-		POPAD
-		POP 	DS
-		POP 	ES
-		IRETD	
 
 _memtest_sub:	; unsigned int memtest_sub(unsigned int start, unsigned int end)
 		PUSH	EDI						; （由于还要使用EBX, ESI, EDI）
@@ -342,73 +233,9 @@ _farcall:		; void farcall(int eip, int cs);
 
 _asm_dogged_api:	; void dogged_api(int edi, int esi, int ebp, int esp, int ebx, int edx, int ecx, int eax);
 		STI
-		PUSH 	DS
-		PUSH 	ES
-		PUSHAD
-		MOV 	EAX,1*8
-		MOV 	DS,AX 	;将DS设定为操作系统用
-		MOV 	ECP,[0xfe4]
-		ADD 	ECX,-40
-		MOV 	[ECX+32],ESP 	;保护应用程序的ESP
-		MOV 	[ECX+36],SS
-		;将PUSHAD后的值复制到系统栈
-		MOV		EDX,[ESP]
-		MOV 	EBX,[ESP+4]
-		MOV 	[ECX],EDX
-		MOV 	[ECX+4],EBX
-		MOV		EDX,[ESP+8]
-		MOV 	EBX,[ESP+12]
-		MOV 	[ECX+8],EDX
-		MOV 	[ECX+12],EBX
-		MOV		EDX,[ESP+16]
-		MOV 	EBX,[ESP+20]
-		MOV 	[ECX+16],EDX
-		MOV 	[ECX+20],EBX
-		MOV		EDX,[ESP+24]
-		MOV 	EBX,[ESP+28]
-		MOV 	[ECX+24],EDX
-		MOV 	[ECX+28],EBX
-		MOV 	ES,AX 	;剩余段寄存器设为操作系统使用
-		MOV 	SS,AX
-		MOV 	ESP,ECX
-		STI
+		PUSHAD	;保存寄存器的值
+		PUSHAD	;向C中的函数传递值
 		CALL	_dogged_api
-		MOV 	ECX,[ESP]
-		MOV 	EAX,[ESP+36] 	;取应用程序SS
-		CLI
-		MOV 	SS,AX
-		MOV 	ESP,ECX
+		ADD 	ESP,32
 		POPAD
-		POP 	ES
-		POP 	DS
 		IRETD
-
-_start_app:		;void start_app(int eip, int cs, int esp, int ds);
-		PUSHAD
-		MOV 	EAX,[ESP+36]	;应用程序用EIP
-		MOV 	ECX,[ESP+40]	;应用程序用CS
-		MOV 	EDX,[ESP+44]	;应用程序用ESP
-		MOV 	EBX,[ESP+48]	;应用程序用DS/SS
-		MOV 	[0xfe4],ESP 	;操作系统用ESP
-		CLI
-		MOV 	ES,BX
-		MOV 	SS,BX
-		MOV 	DS,BX
-		MOV 	FS,BX
-		MOV 	GS,BX
-		MOV 	ESP,EDX
-		STI
-		PUSH 	ECX 	;用于far_CALL的push(cs)
-		PUSH 	EAX 	;用于far_CALL的push(eip)
-		CALL 	FAR [ESP] 	;调用应用程序
-		MOV 	EAX,1*8 	；操作系统用DS/SS
-		CLI
-		MOV 	ES,AX
-		MOV 	SS,AX
-		MOV 	DS,AX
-		MOV 	FS,AX
-		MOV 	GS,AX
-		MOV 	ESP,[0xfe4]
-		STI
-		POPAD
-		RET
