@@ -138,7 +138,7 @@ _asm_inthandler20:
 
 .from_app:
 ;当应用程序活动时发生的中断
-		MOV 	EAP,1*8
+		MOV 	EAX,1*8
 		MOV 	DS,AX
 		MOV 	ECX,[0xfe4] 	;操作系统的esp
 		ADD 	ECX,-8
@@ -182,7 +182,7 @@ _asm_inthandler21:
 
 .from_app:
 ;当应用程序活动时发生的中断
-		MOV 	EAP,1*8
+		MOV 	EAX,1*8
 		MOV 	DS,AX
 		MOV 	ECX,[0xfe4] 	;操作系统的esp
 		ADD 	ECX,-8
@@ -225,7 +225,7 @@ _asm_inthandler27:
 
 .from_app:
 ;当应用程序活动时发生的中断
-		MOV 	EAP,1*8
+		MOV 	EAX,1*8
 		MOV 	DS,AX
 		MOV 	ECX,[0xfe4] 	;操作系统的esp
 		ADD 	ECX,-8
@@ -268,7 +268,7 @@ _asm_inthandler2c:
 
 .from_app:
 ;当应用程序活动时发生的中断
-		MOV 	EAP,1*8
+		MOV 	EAX,1*8
 		MOV 	DS,AX
 		MOV 	ECX,[0xfe4] 	;操作系统的esp
 		ADD 	ECX,-8
@@ -347,7 +347,7 @@ _asm_dogged_api:	; void dogged_api(int edi, int esi, int ebp, int esp, int ebx, 
 		PUSHAD
 		MOV 	EAX,1*8
 		MOV 	DS,AX 	;将DS设定为操作系统用
-		MOV 	ECP,[0xfe4]
+		MOV 	ECX,[0xfe4]
 		ADD 	ECX,-40
 		MOV 	[ECX+32],ESP 	;保护应用程序的ESP
 		MOV 	[ECX+36],SS
@@ -401,7 +401,7 @@ _start_app:		;void start_app(int eip, int cs, int esp, int ds);
 		PUSH 	ECX 	;用于far_CALL的push(cs)
 		PUSH 	EAX 	;用于far_CALL的push(eip)
 		CALL 	FAR [ESP] 	;调用应用程序
-		MOV 	EAX,1*8 	；操作系统用DS/SS
+		MOV 	EAX,1*8 	;操作系统用DS/SS
 		CLI
 		MOV 	ES,AX
 		MOV 	SS,AX
@@ -412,4 +412,3 @@ _start_app:		;void start_app(int eip, int cs, int esp, int ds);
 		STI
 		POPAD
 		RET
-		
