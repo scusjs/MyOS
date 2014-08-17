@@ -28,6 +28,7 @@ void farjmp(int eip, int cs);
 void asm_cons_putchar(void);
 void asm_dogged_api(void);
 void farcall(int eip, int cs);
+void start_app(int eip, int cs, int esp, int ds);
 
 /* graphic.c */
 void init_palette(void);
