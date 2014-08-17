@@ -24,6 +24,8 @@ void asm_inthandler20(void);
 void asm_inthandler21(void);
 void asm_inthandler27(void);
 void asm_inthandler2c(void);
+void asm_inthandler0d(void);
+
 void farjmp(int eip, int cs);
 void asm_cons_putchar(void);
 void asm_dogged_api(void);
@@ -98,7 +100,7 @@ void set_gatedesc(struct GATE_DESCRIPTOR *gd, int offset, int selector, int ar);
 /* int.c */
 
 void init_pic(void);
-void inthandler27(int *esp);;
+void inthandler27(int *esp);
 #define PIC0_ICW1		0x0020 	//初始化控制数据（initial control word）
 #define PIC0_OCW2		0x0020
 #define PIC0_IMR		0x0021	//中断屏蔽寄存器（interrupt mask register）
@@ -280,6 +282,7 @@ int cmd_app(struct CONSOLE *cons, int *fat, char *cmdline);
 void cons_putstr(struct CONSOLE *cons, char *s);
 void cons_putstr_withlen (struct CONSOLE *cons, char *s, int len);
 void dogged_api(int edi, int esi, int ebp, int esp, int ebx, int edx, int ecx, int eax);
+int inthandler0d(int *esp);
 
 /* file.c */
 struct FILEINFO {

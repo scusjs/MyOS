@@ -20,9 +20,13 @@
 		GLOBAL	_farjmp, _farcall
 		GLOBAL	_start_app
 		GLOBAL	_asm_cons_putchar, _asm_dogged_api
-		GLOBAL	_asm_inthandler20, _asm_inthandler21, _asm_inthandler27, _asm_inthandler2c
+		GLOBAL	_asm_inthandler20, _asm_inthandler21
+		GLOBAL _asm_inthandler27, _asm_inthandler2c
+		GLOBAL _asm_inthandler0d
 		GLOBAL	_memtest_sub
-		EXTERN	_inthandler20, _inthandler21, _inthandler27, _inthandler2c
+		EXTERN	_inthandler20, _inthandler21
+		EXTERN _inthandler27, _inthandler2c
+		EXTERN _inthandler0d
 		EXTERN	_cons_putchar, _dogged_api
 
 [SECTION .text]
@@ -286,6 +290,68 @@ _asm_inthandler2c:
 		POP 	DS
 		POP 	ES
 		IRETD	
+
+_asm_inthandler0d:
+		STI
+		PUSH	ES
+		PUSH	DS
+		PUSHAD
+		MOV		AX,SS
+		CMP 	AX,1*8
+		JNE 	.from_app
+
+		MOV		EAX,ESP
+		PUSH 	SS
+		PUSH	EAX
+		MOV		AX,SS
+		MOV		DS,AX
+		MOV		ES,AX
+		CALL	_inthandler0d
+
+		ADD 	ESP,8
+		POPAD
+		POP		DS
+		POP		ES
+		ADD 	ESP,4
+		IRETD
+
+.from_app:
+;当应用程序活动时发生的中断
+		CLI
+		MOV 	EAX,1*8
+		MOV 	DS,AX
+		MOV 	ECX,[0xfe4] 	;操作系统的esp
+		ADD 	ECX,-8
+		MOV 	[ECX+4],SS
+		MOV 	[ECX],ESP
+		MOV 	SS,AX
+		MOV 	ES,AX
+		MOV 	ESP,ECX
+		STI
+		CALL 	_inthandler0d
+		CLI
+		CMP 	EAX,0
+		JNE 	.kill	
+		POP 	ECX
+		POP 	EAX
+		MOV 	SS,AX
+		MOV 	ESP,ECX
+		POPAD
+		POP 	DS
+		POP 	ES
+		ADD 	ESP,4
+		IRETD
+.kill:
+		MOV 	EAX,1*8
+		MOV 	ES,AX
+		MOV 	SS,AX
+		MOV 	DS,AX
+		MOV 	FS,AX
+		MOV 	GS,AX
+		MOV 	ESP,[0xfe4]
+		STI
+		POPAD
+		RET
 
 _memtest_sub:	; unsigned int memtest_sub(unsigned int start, unsigned int end)
 		PUSH	EDI						; （由于还要使用EBX, ESI, EDI）
